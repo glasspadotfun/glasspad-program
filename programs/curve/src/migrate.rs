@@ -5,7 +5,7 @@
 use crate::*;
 use anchor_lang::prelude::*;
 use anchor_spl::{associated_token::AssociatedToken, token::Token, token_interface::{Mint, TokenAccount}};
-use anchor_lang::solana_program::{instruction::{AccountMeta, Instruction}, program::{invoke, invoke_signed}};
+use anchor_lang::solana_program::{instruction::{AccountMeta, Instruction}, program::invoke_signed};
 
 /// raydium cpmm (mainnet; the `devnet` feature switches all three to raydium's devnet deployment).
 #[cfg(not(feature = "devnet"))]
@@ -136,10 +136,10 @@ pub fn execute<'info>(ctx: Context<'_, '_, '_, 'info, Migrate<'info>>) -> Result
         .checked_sub(fee).ok_or_else(|| error!(PumpError::Overflow))?;
     a.bonding_curve.sub_lamports(quote)?;
     a.pool_authority_wsol_account.add_lamports(quote)?;
-    invoke(
-        &Instruction { program_id: anchor_spl::token::ID, accounts: vec![AccountMeta::new(a.pool_authority_wsol_account.key(), false), AccountMeta::new(a.bonding_curve.key(), false)], data: vec![17] }, // sync_native
-        &[a.pool_authority_wsol_account.to_account_info(), a.bonding_curve.to_account_info()],
-    )?;
+    // the runtime checks the caller's balances at every cpi over the accounts it passes, so the two
+    // accounts just touched ride along in one more (idempotent, no-op) ata create before the sync.
+    create_ata(a, &a.pool_authority_wsol_account, &a.wsol_mint.to_account_info(), signer)?;
+    anchor_spl::token::sync_native(CpiContext::new(a.token_program.to_account_info(), anchor_spl::token::SyncNative { account: a.pool_authority_wsol_account.to_account_info() }))?;
 
     // 4. the pool, signed by pool_authority as raydium's "creator".
     let coin_is_0 = a.token_0_mint.key() == mint_key;
