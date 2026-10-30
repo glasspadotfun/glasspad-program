@@ -25,10 +25,12 @@ jobs:
           sh -c "$(curl -sSfL https://release.anza.xyz/v2.1.21/install)"
           echo "$HOME/.local/share/solana/install/active_release/bin" >> $GITHUB_PATH
       - name: versions
-        run: solana --version && cargo-build-sbf --version && rustc --version
+        run: solana --version && cargo-build-sbf --version && rustc --version && rustup toolchain list
       - name: build
         working-directory: programs/curve
-        run: cargo build-sbf --tools-version v1.44 -- --locked
+        env:
+          RUST_BACKTRACE: 1
+        run: cargo build-sbf -- --locked
       - name: hashes
         working-directory: programs/curve
         run: ls -la target/deploy && sha256sum target/deploy/*.so
