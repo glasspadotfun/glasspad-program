@@ -1,14 +1,14 @@
 pub mod consts;
 pub mod burn;
-pub use burn::{BurnCrank, SealPlatformCoin};
+pub use burn::{BurnCrank, SealPlatformCoin, __client_accounts_burn_crank, __client_accounts_seal_platform_coin, __cpi_client_accounts_burn_crank, __cpi_client_accounts_seal_platform_coin};
 #[path="buy.rs"]pub mod legacy_buy;
 pub mod creator{#[path="collect_creator_fee.rs"]pub mod collect_creator_fee;}pub use creator::collect_creator_fee as collect_v2;
-pub use collect_v2::CollectCreatorFee;
+pub use collect_v2::{CollectCreatorFee, __client_accounts_collect_creator_fee, __cpi_client_accounts_collect_creator_fee};
 #[path="legacy_native_payments.rs"]pub mod legacy_native_payments;
 #[path="extend_account.rs"]pub mod extend;#[path = "fee_recipient.rs"] pub(crate) mod fee_recipient;
-pub use extend::ExtendAccount;
+pub use extend::{ExtendAccount, __client_accounts_extend_account, __cpi_client_accounts_extend_account};
 pub mod migrate;
-pub use migrate::Migrate;
+pub use migrate::{Migrate, __client_accounts_migrate, __cpi_client_accounts_migrate};
 #[path="sell.rs"]pub mod legacy_sell;
 pub use legacy_sell::*;
 #[path="util/constant_product.rs"] pub mod constant_product; #[path="util/fee.rs"] pub mod fee_math;#[path="util/payments.rs"] pub mod payments;

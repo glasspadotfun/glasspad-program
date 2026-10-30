@@ -110,7 +110,7 @@ pub fn collect_creator_fee(ctx:Context<crate::CollectCreatorFee>)->Result<()>{
  if ctx.accounts.creator.lamports().saturating_add(amount)<rent.minimum_balance(ctx.accounts.creator.data_len()){msg!("Creator account does not have enough rent-exemption lamports");return Ok(());}
  let creator=ctx.accounts.creator.key();
  transfer_lamports(&ctx.accounts.system_program,creator_vault,&ctx.accounts.creator,amount,&[&[b"creator-vault",creator.as_ref(),&[ctx.bumps.creator_vault]]])?;
- let event=crate::CollectCreatorFeeEvent{timestamp:Clock::get()?.unix_timestamp,creator,creator_fee:amount,quote_mint:Pubkey::default()};emit!(event);emit_cpi!(event);Ok(())
+ let event=CollectCreatorFeeEvent{timestamp:Clock::get()?.unix_timestamp,creator,creator_fee:amount,quote_mint:Pubkey::default()};emit!(event);emit_cpi!(event);Ok(())
 }}}
 #[inline]fn transfer_lamports<'info>(system_program:&Program<'info,System>,from:impl ToAccountInfo<'info>,to:impl ToAccountInfo<'info>,amount:u64,signer_seeds:&[&[&[u8]]])->Result<()>{anchor_lang::system_program::transfer(CpiContext::new_with_signer(system_program.to_account_info(),anchor_lang::system_program::Transfer{from:from.to_account_info(),to:to.to_account_info()},signer_seeds),amount)}
 
