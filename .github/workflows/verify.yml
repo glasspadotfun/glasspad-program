@@ -1,0 +1,44 @@
+name: verifiable build
+# the deterministic docker build (solana-verify) of the curve program: the .so that goes to mainnet,
+# and the hash anyone can reproduce with `solana-verify verify-from-repo`.
+on:
+  workflow_dispatch:
+  push:
+    branches: [main]
+    paths: ['programs/**', '.github/workflows/verify.yml']
+permissions:
+  contents: read
+jobs:
+  build:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 90
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - name: mainnet
+            args: ''
+          - name: devnet
+            args: '-- --features devnet'
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - name: solana-verify 0.5.2
+        run: |
+          curl --fail --location --retry 3 -o /usr/local/bin/solana-verify https://github.com/Ellipsis-Labs/solana-verifiable-build/releases/download/v0.5.2/solana-verify-0.5.2-linux
+          echo "b9d5ccce9634dc14269cab3e7a58649bc141b3306e7735a94478c936341f211f  /usr/local/bin/solana-verify" | sha256sum -c -
+          chmod +x /usr/local/bin/solana-verify && solana-verify --version
+      - name: deterministic build (${{ matrix.name }})
+        run: solana-verify build --library-name glasspad_curve programs/curve ${{ matrix.args }}
+      - name: hash
+        run: |
+          mkdir -p out
+          cp programs/curve/target/deploy/glasspad_curve.so out/glasspad_curve.verified.${{ matrix.name }}.so
+          sha256sum out/*.so
+          echo "executable hash (what verify-from-repo compares):"
+          solana-verify get-executable-hash out/glasspad_curve.verified.${{ matrix.name }}.so | tee out/executable-hash.${{ matrix.name }}.txt
+      - uses: actions/upload-artifact@v4
+        with:
+          name: verified-${{ matrix.name }}
+          path: out/*
