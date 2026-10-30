@@ -30,7 +30,11 @@ jobs:
         working-directory: programs/curve
         env:
           RUST_BACKTRACE: 1
-        run: cargo build-sbf -- --locked && mkdir -p out && cp target/deploy/glasspad_curve.so out/glasspad_curve.mainnet.so
+        # a frame over 4 kb is printed as an 'Error:' line but does not fail the build; at run time it is memory corruption. fail here.
+        run: |
+          cargo build-sbf -- --locked 2>&1 | tee build-mainnet.log
+          ! grep -q 'Stack offset' build-mainnet.log
+          mkdir -p out && cp target/deploy/glasspad_curve.so out/glasspad_curve.mainnet.so
       - name: build (devnet)
         working-directory: programs/curve
         run: |

@@ -237,3 +237,81 @@ Program log: 23enffH6dZ5MnGAJCebMozdyBjNh1RYYiSN7LAn1QKmC
 - burn:  platform coin 23enffH6dZ5MnGAJCebMozdyBjNh1RYYiSN7LAn1QKmC, burn pda 0.027328327 → 0.01148844 sol
 - collect_creator_fee: [`5WyuQLYPDgcoeHbccyeHKKxLnTVoTUQiBSbBeCtQz88uAvY4BeRNpRxG9GHrkJPrM3zdaaaKxKUpUYVyzRSawZgM`](https://solscan.io/tx/5WyuQLYPDgcoeHbccyeHKKxLnTVoTUQiBSbBeCtQz88uAvY4BeRNpRxG9GHrkJPrM3zdaaaKxKUpUYVyzRSawZgM?cluster=devnet)
 - done:  deployer 4.788822145 sol
+
+## devnet 2026-10-30T13:59:24.946Z
+- canary on devnet:  program DpB6AVXBToz1wqYURvpttSThxcFHyzWe71F1Ufg1escH, deployer 6TrrMJAHMriYKHAak9xwL2TqCLWLW7kJwM2A7ackmqfy, 2026-10-30T13:59:20.437Z
+- deployer balance:  4.785487145 sol
+- initialize:  global already exists, skipped
+- global:  fee 100 bps, creator 40 bps, buyback 5000 bps, migration fee 0.2 sol, team 6TrrMJAHMriYKHAak9xwL2TqCLWLW7kJwM2A7ackmqfy, burn 2P5zbfTUDNsaqCKaPZjLmUo5ezkHpPANqiRhHDioySdw
+- create: [`hEeYCFNEvC1grPfFM6nWoEax1yU3tYFBoeZ9uKArQVS71AdcesLPnkNnJwtszCyoMifQw6HaPj6dGNP39vsvRvY`](https://solscan.io/tx/hEeYCFNEvC1grPfFM6nWoEax1yU3tYFBoeZ9uKArQVS71AdcesLPnkNnJwtszCyoMifQw6HaPj6dGNP39vsvRvY?cluster=devnet)
+- mint:  8tWxP6wGdMwXuRorce4yvkchrCb74yGGcinX5P3twLr6
+- buy 0.2 sol: [`L7crbWfT7CTyWAeenWB8JdEX9xoq1xrCid1tQxXg19VPhbosjuA3cQY2DU1WYGB6QsFVxoJoWF5ECEbLV7XMA39`](https://solscan.io/tx/L7crbWfT7CTyWAeenWB8JdEX9xoq1xrCid1tQxXg19VPhbosjuA3cQY2DU1WYGB6QsFVxoJoWF5ECEbLV7XMA39?cluster=devnet)
+- curve after buy:  real sol 0.197238658, real tokens 367475250231199
+- sell half: [`6L8LyUGLhDBMQgGAH7jufmnJUrJBMfFXdv8WNBnPXqYgVTXCQqGjpRhXFDZszEqnFK55q7okqUxDEd1F7emwX9x`](https://solscan.io/tx/6L8LyUGLhDBMQgGAH7jufmnJUrJBMfFXdv8WNBnPXqYgVTXCQqGjpRhXFDZszEqnFK55q7okqUxDEd1F7emwX9x?cluster=devnet)
+- curve after sell:  real sol 0.074220684
+- buy to complete #1: [`4QnCTLqcpm6NcrtoEUy8kfSDUhXELjNtKguPX7RrLLYsqh8LuBTWzuRbzbHsGZMVBc1yNhxB3TuMwtMXPTQKb2C`](https://solscan.io/tx/4QnCTLqcpm6NcrtoEUy8kfSDUhXELjNtKguPX7RrLLYsqh8LuBTWzuRbzbHsGZMVBc1yNhxB3TuMwtMXPTQKb2C?cluster=devnet)
+- buy to complete #2: [`4DHYPyiZZUcBWLvSzJke471LWEnLLnx4d6S62Q8DiUo9BvCGUiUiyGFxqzk5KPMgVM2w7g4ir7Yct8DD3QvPAuER`](https://solscan.io/tx/4DHYPyiZZUcBWLvSzJke471LWEnLLnx4d6S62Q8DiUo9BvCGUiUiyGFxqzk5KPMgVM2w7g4ir7Yct8DD3QvPAuER?cluster=devnet)
+- curve complete:  true, real sol 0.850053598, team 3.90626774 sol, burn pda 0.016968887 sol
+- FAILED:  Simulation failed. 
+Message: Transaction simulation failed: Error processing Instruction 1: Program failed to complete. 
+Logs: 
+[
+  "Program TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA invoke [2]",
+  "Program TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA consumed 118 of 402804 compute units",
+  "Program TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA success",
+  "Program 11111111111111111111111111111111 invoke [2]",
+  "Program 11111111111111111111111111111111 success",
+  "Program 11111111111111111111111111111111 invoke [2]",
+  "Program 11111111111111111111111111111111 success",
+  "Program data: jXqFaat97W9RK+b3nLza4AAChXGE8l37TaIjscLRjCcTGLcgHholRHU0TL+toxT+97RPnhqc5BYo4vtmx1XTYm0GbDRiln4rAAgBqSy8AADeB78mAAAAAADC6wsAAAAAkBKeAAAAAACQEp4AAAAAAP+RU2pPj7T1vqSy00Ymf96pzfLd0cB2U+XzyZgLyT8Ya9E7Y1UAAAC8ouRqAAAAAA==",
+  "Program DpB6AVXBToz1wqYURvpttSThxcFHyzWe71F1Ufg1escH consumed 202404 of 599850 compute units",
+  "Program DpB6AVXBToz1wqYURvpttSThxcFHyzWe71F1Ufg1escH failed: Access violation reading 8 bytes at address 0xfe14a3adbf000000 (in unallocated region)"
+]. 
+Catch the `SendTransactionError` and call `getLogs()` on it for full details.
+
+## devnet 2026-10-30T13:59:37.542Z
+- canary on devnet:  program DpB6AVXBToz1wqYURvpttSThxcFHyzWe71F1Ufg1escH, deployer 6TrrMJAHMriYKHAak9xwL2TqCLWLW7kJwM2A7ackmqfy, 2026-10-30T13:59:37.127Z
+- deployer balance:  3.90626774 sol
+- initialize:  global already exists, skipped
+- global:  fee 100 bps, creator 40 bps, buyback 5000 bps, migration fee 0.2 sol, team 6TrrMJAHMriYKHAak9xwL2TqCLWLW7kJwM2A7ackmqfy, burn 2P5zbfTUDNsaqCKaPZjLmUo5ezkHpPANqiRhHDioySdw
+- mint:  8tWxP6wGdMwXuRorce4yvkchrCb74yGGcinX5P3twLr6
+- curve after sell:  real sol 0.850053598
+- curve complete:  true, real sol 0.850053598, team 3.90626774 sol, burn pda 0.016968887 sol
+- FAILED:  Simulation failed. 
+Message: Transaction simulation failed: Error processing Instruction 1: Program failed to complete. 
+Logs: 
+[
+  "Program TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA invoke [2]",
+  "Program TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA consumed 118 of 402804 compute units",
+  "Program TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA success",
+  "Program 11111111111111111111111111111111 invoke [2]",
+  "Program 11111111111111111111111111111111 success",
+  "Program 11111111111111111111111111111111 invoke [2]",
+  "Program 11111111111111111111111111111111 success",
+  "Program data: jXqFaat97W9RK+b3nLza4AAChXGE8l37TaIjscLRjCcTGLcgHholRHU0TL+toxT+97RPnhqc5BYo4vtmx1XTYm0GbDRiln4rAAgBqSy8AADeB78mAAAAAADC6wsAAAAAkBKeAAAAAACQEp4AAAAAAP+RU2pPj7T1vqSy00Ymf96pzfLd0cB2U+XzyZgLyT8Ya9E7Y1UAAADIouRqAAAAAA==",
+  "Program DpB6AVXBToz1wqYURvpttSThxcFHyzWe71F1Ufg1escH consumed 202404 of 599850 compute units",
+  "Program DpB6AVXBToz1wqYURvpttSThxcFHyzWe71F1Ufg1escH failed: Access violation reading 8 bytes at address 0xfe14a3adbf000000 (in unallocated region)"
+]. 
+Catch the `SendTransactionError` and call `getLogs()` on it for full details.
+
+## devnet 2026-10-30T14:05:07.363Z
+- canary on devnet:  program DpB6AVXBToz1wqYURvpttSThxcFHyzWe71F1Ufg1escH, deployer 6TrrMJAHMriYKHAak9xwL2TqCLWLW7kJwM2A7ackmqfy, 2026-10-30T14:04:59.807Z
+- deployer balance:  3.90293774 sol
+- initialize:  global already exists, skipped
+- global:  fee 100 bps, creator 40 bps, buyback 5000 bps, migration fee 0.2 sol, team 6TrrMJAHMriYKHAak9xwL2TqCLWLW7kJwM2A7ackmqfy, burn 2P5zbfTUDNsaqCKaPZjLmUo5ezkHpPANqiRhHDioySdw
+- create: [`2EqW5uxjZ4sG1dStaKAsRE1hkoaqfmGoSoAg4SwuGK3mQTyanXvx9KDhqjg48tBpP5oUJ1DfjjisAW4p9jVNTrbP`](https://solscan.io/tx/2EqW5uxjZ4sG1dStaKAsRE1hkoaqfmGoSoAg4SwuGK3mQTyanXvx9KDhqjg48tBpP5oUJ1DfjjisAW4p9jVNTrbP?cluster=devnet)
+- mint:  9Ubfzo5bayHcAZ46aiinsF86KUTVfVsYrfz3NMirco34
+- buy 0.2 sol: [`37qiYcvNw6suuAxZ4FhvYfGUCLvFuhzzwLUdUY5Mk8P2B7PFocT7r4vqSYV6nN7rrQyFGYZYcq1F29duXimPWFVA`](https://solscan.io/tx/37qiYcvNw6suuAxZ4FhvYfGUCLvFuhzzwLUdUY5Mk8P2B7PFocT7r4vqSYV6nN7rrQyFGYZYcq1F29duXimPWFVA?cluster=devnet)
+- curve after buy:  real sol 0.197238658, real tokens 367475250231199
+- sell half: [`5epqq9zg7mAMRSky3JSS2dzTsyBBErPDcG7cWoFNdycXwTFctGFybHeuRYvt7B29MarcopWXZ3whSqHA4TVdx9Vv`](https://solscan.io/tx/5epqq9zg7mAMRSky3JSS2dzTsyBBErPDcG7cWoFNdycXwTFctGFybHeuRYvt7B29MarcopWXZ3whSqHA4TVdx9Vv?cluster=devnet)
+- curve after sell:  real sol 0.074220684
+- buy to complete #1: [`5WXNNdHqrVZfKAtSvPM7tBmMnbS2Qp9UicVrxT6waCQdUPbtaesbfsnvCvHtgMT7VDmAueyAh1onSGJhm9xgy54w`](https://solscan.io/tx/5WXNNdHqrVZfKAtSvPM7tBmMnbS2Qp9UicVrxT6waCQdUPbtaesbfsnvCvHtgMT7VDmAueyAh1onSGJhm9xgy54w?cluster=devnet)
+- buy to complete #2: [`23jQfbeLi7v1gXPbxPmukRkGXLvydHxRkjNP3dL7v1AefvAR9m9UoNFW8xHXRukAu2VvopER9dmCJu7pAohoPA2y`](https://solscan.io/tx/23jQfbeLi7v1gXPbxPmukRkGXLvydHxRkjNP3dL7v1AefvAR9m9UoNFW8xHXRukAu2VvopER9dmCJu7pAohoPA2y?cluster=devnet)
+- curve complete:  true, real sol 0.850053598, team 3.023718335 sol, burn pda 0.022449334 sol
+- migrate: [`5qhuPXWz3XdWDY3Yn5aXgRypHefprFJKXujhzugFXShkZ7cifX36dRfQnUP52qXh4t12i5AgMAhn1DVs4Hrnuox7`](https://solscan.io/tx/5qhuPXWz3XdWDY3Yn5aXgRypHefprFJKXujhzugFXShkZ7cifX36dRfQnUP52qXh4t12i5AgMAhn1DVs4Hrnuox7?cluster=devnet)
+- pool:  2ZXpNbjEcWvjfbthA5BJdnNmTEZFVaeRHrWVDPcr4LqY (lp mint DQSNAu7oJchYr6DbNaEqhXYcMDEU4kjvvYw2HaCKEkDX), team 3.034072775 sol, burn pda 0.032808774 sol
+- seal_platform_coin:  already sealed to 23enffH6dZ5MnGAJCebMozdyBjNh1RYYiSN7LAn1QKmC
+- burn_crank: [`3hbf5P4aJhdGzeSN8AiuRHHkhgU5ATLGCnumf6phQvi7mncNAUURZg3iJV5fQXjuaBHzppNbjnFmmjbPwojtcoAV`](https://solscan.io/tx/3hbf5P4aJhdGzeSN8AiuRHHkhgU5ATLGCnumf6phQvi7mncNAUURZg3iJV5fQXjuaBHzppNbjnFmmjbPwojtcoAV?cluster=devnet)
+- burn:  platform coin 23enffH6dZ5MnGAJCebMozdyBjNh1RYYiSN7LAn1QKmC, burn pda 0.032808774 → 0.01148844 sol
+- collect_creator_fee: [`3YVa61c64eLaBUnnfNzD3SzLti2SZ8zXzZmzqJ9o967WPE5gkaWcPHZEn5fvmwPDZdZLR7PajAJT4qN1kdhMCMyA`](https://solscan.io/tx/3YVa61c64eLaBUnnfNzD3SzLti2SZ8zXzZmzqJ9o967WPE5gkaWcPHZEn5fvmwPDZdZLR7PajAJT4qN1kdhMCMyA?cluster=devnet)
+- done:  deployer 3.042831495 sol
