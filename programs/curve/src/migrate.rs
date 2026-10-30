@@ -7,12 +7,21 @@ use anchor_lang::prelude::*;
 use anchor_spl::{associated_token::AssociatedToken, token::Token, token_interface::{Mint, TokenAccount}};
 use anchor_lang::solana_program::{instruction::{AccountMeta, Instruction}, program::invoke_signed};
 
-/// raydium cpmm, mainnet.
+/// raydium cpmm (mainnet; the `devnet` feature switches all three to raydium's devnet deployment).
+#[cfg(not(feature = "devnet"))]
 pub const CPMM_PROGRAM: Pubkey = anchor_lang::solana_program::pubkey!("CPMMoo8L3F4NbTegBCKVNunggL7H1ZpdTHKxQB5qKP1C");
+#[cfg(feature = "devnet")]
+pub const CPMM_PROGRAM: Pubkey = anchor_lang::solana_program::pubkey!("DRaycpLY18LhpbydsBWbVJtxpNv9oXPgjRSfpF2bWpYb");
 /// raydium's pool creation fee receiver (a wsol token account).
+#[cfg(not(feature = "devnet"))]
 pub const CPMM_CREATE_POOL_FEE: Pubkey = anchor_lang::solana_program::pubkey!("DNXgeM9EiiaAbaWvwjHj9fQQLAX5ZsfHyvmYUNRAdNC8");
+#[cfg(feature = "devnet")]
+pub const CPMM_CREATE_POOL_FEE: Pubkey = anchor_lang::solana_program::pubkey!("3oE58BKVt8KuYkGxx8zBojugnymWmBiyafWgMrnb6eYy");
 /// raydium cpmm config index 0 (0.25% trade fee).
+#[cfg(not(feature = "devnet"))]
 pub const CPMM_AMM_CONFIG: Pubkey = anchor_lang::solana_program::pubkey!("D4FPEruKEHrG5TenZ2mpDGEfu1iUvTiqBxvpU8HLBvC2");
+#[cfg(feature = "devnet")]
+pub const CPMM_AMM_CONFIG: Pubkey = anchor_lang::solana_program::pubkey!("5MxLgy9oPdTC3YgkiePHqr3EoCRD9uLVYRQS2ANAs7wy");
 const CPMM_AUTH_SEED: &[u8] = b"vault_and_lp_mint_auth_seed";
 const CPMM_POOL_SEED: &[u8] = b"pool";
 const CPMM_LP_MINT_SEED: &[u8] = b"pool_lp_mint";

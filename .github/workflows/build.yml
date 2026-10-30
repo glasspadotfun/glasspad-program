@@ -26,15 +26,18 @@ jobs:
           echo "$HOME/.local/share/solana/install/active_release/bin" >> $GITHUB_PATH
       - name: versions
         run: solana --version && cargo-build-sbf --version && rustc --version && rustup toolchain list
-      - name: build
+      - name: build (mainnet)
         working-directory: programs/curve
         env:
           RUST_BACKTRACE: 1
-        run: cargo build-sbf -- --locked
+        run: cargo build-sbf -- --locked && mkdir -p out && cp target/deploy/*.so out/glasspad_curve.mainnet.so
+      - name: build (devnet)
+        working-directory: programs/curve
+        run: cargo build-sbf -- --locked --features devnet && cp target/deploy/*.so out/glasspad_curve.devnet.so
       - name: hashes
         working-directory: programs/curve
-        run: ls -la target/deploy && sha256sum target/deploy/*.so
+        run: ls -la out && sha256sum out/*.so
       - uses: actions/upload-artifact@v4
         with:
           name: curve-so
-          path: programs/curve/target/deploy/*.so
+          path: programs/curve/out/*.so

@@ -28,7 +28,7 @@ pub struct DistributeCreatorFeesV2<'info>{
  pub system_program:Program<'info,System>,
  /// CHECK: Event authority.
  #[account(seeds=[b"__event_authority"],bump)]pub event_authority:AccountInfo<'info>,
- pub program:Program<'info,crate::program::PumpRecovered>,
+ pub program:Program<'info,crate::program::GlasspadCurve>,
  /// CHECK: Nonlegacy branch parses token data manually.
  #[account(mut,seeds=[creator_vault.key().as_ref(),quote_token_program.key().as_ref(),quote_mint.key().as_ref()],bump,seeds::program=associated_token_program.key())]pub creator_vault_quote_token_account:UncheckedAccount<'info>,
  #[account(constraint=quote_mint.key()==bonding_curve.quote_mint||(bonding_curve.quote_mint==Pubkey::default()&&quote_mint.key()==anchor_spl::token::spl_token::native_mint::ID) @ PumpError::MintDoesNotMatchBondingCurve)]
@@ -45,7 +45,7 @@ pub struct DistributeCreatorFees<'info>{
  pub system_program:Program<'info,System>,
  /// CHECK: event PDA.
  #[account(seeds=[b"__event_authority"],bump)]pub event_authority:AccountInfo<'info>,
- pub program:Program<'info,crate::program::PumpRecovered>,
+ pub program:Program<'info,crate::program::GlasspadCurve>,
 }
 
 fn validate_shareholder_recipient(shareholder:&Shareholder,recipient:&AccountInfo)->Result<()>{

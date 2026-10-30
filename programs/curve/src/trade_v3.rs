@@ -71,7 +71,7 @@ pub struct SellV3<'info> {
     /// CHECK: PDA for signed event emission.
     #[account(seeds=[b"__event_authority"],bump)]
     pub event_authority: AccountInfo<'info>,
-    pub program: Program<'info,crate::program::PumpRecovered>,
+    pub program: Program<'info,crate::program::GlasspadCurve>,
 }
 fn sub(a:u64,b:u64)->Result<u64>{a.checked_sub(b).ok_or_else(||error!(PumpError::Overflow))}
 

@@ -25,7 +25,7 @@ pub struct MultiHopCurve<'info>{
  /// CHECK: event-signing PDA.
  #[account(seeds=[b"__event_authority"],bump)]
  pub event_authority:AccountInfo<'info>,
- pub program:Program<'info,crate::program::PumpRecovered>,
+ pub program:Program<'info,crate::program::GlasspadCurve>,
 }
 #[derive(Accounts)]
 pub struct CurveHop<'info>{

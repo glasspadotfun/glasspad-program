@@ -68,7 +68,7 @@ pub struct SellV2<'info>{
  pub system_program:Program<'info,System>,
  /// CHECK: event PDA.
  #[account(seeds=[b"__event_authority"],bump)]pub event_authority:AccountInfo<'info>,
- pub program:Program<'info,crate::program::PumpRecovered>,
+ pub program:Program<'info,crate::program::GlasspadCurve>,
 }
 const NO_FEE:Option<crate::trade::native_transfer_fee::Fee>=None;fn add(a:u64,b:u64)->Result<u64>{a.checked_add(b).ok_or_else(||error!(PumpError::Overflow))}
 fn sub(a:u64,b:u64)->Result<u64>{a.checked_sub(b).ok_or_else(||error!(PumpError::Overflow))}

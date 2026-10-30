@@ -78,7 +78,7 @@ use anchor_lang::prelude::*;
 
 
 
-declare_id!("6EF8rrecthR5Dkzon8Nwu78hRvfCKubJ14M5uBEwF6P");
+declare_id!("DpB6AVXBToz1wqYURvpttSThxcFHyzWe71F1Ufg1escH");
 declare_program!(pump_amm);
 declare_program!(pump_fees);
 declare_program!(mayhem);
@@ -87,7 +87,7 @@ declare_program!(mayhem);
 // layout-pad: aligns the next Source site with the original lib.rs line
 
 #[program]
-pub mod pump_recovered {
+pub mod glasspad_curve {
     use super::*;
     pub fn initialize(ctx:Context<Initialize>)->Result<()>{global_init::execute(ctx)}
 // layout-pad: aligns the next Source site with the original lib.rs line
@@ -880,7 +880,7 @@ pub enum PumpError {
     TooLittleSolReceived,
     #[msg("The mint does not match the bonding curve.")]
     MintDoesNotMatchBondingCurve,
-    #[msg("The bonding curve has completed and liquidity migrated to raydium.")]
+    #[msg("the curve is complete. anyone can call migrate to open its raydium pool.")]
     BondingCurveComplete,
     #[msg("The bonding curve has not completed.")]
     BondingCurveNotComplete,
@@ -2652,14 +2652,14 @@ pub struct LegacyBuy<'info>{
  /// CHECK: event authority.
  #[account(seeds=[b"__event_authority"],bump)]pub event_authority:AccountInfo<'info>,
  /// CHECK: self CPI.
- pub program:Program<'info,crate::program::PumpRecovered>,
+ pub program:Program<'info,crate::program::GlasspadCurve>,
 }
 
 #[derive(Accounts)]
 pub struct LegacySell<'info>{
  #[account(seeds=[b"global"],bump)]pub global:Box<Account<'info,Global>>,#[doc="CHECK: handler validates recipient."]#[account(mut)]pub fee_recipient:UncheckedAccount<'info>,pub mint:InterfaceAccount<'info,anchor_spl::token_interface::Mint>,#[account(mut,seeds=[b"bonding-curve",mint.key().as_ref()],bump,constraint=bonding_curve.quote_mint==Pubkey::default() @ PumpError::UnsupportedQuoteMint)]pub bonding_curve:Account<'info,trade_types::BondingCurve>,
  #[account(mut,associated_token::mint=mint,associated_token::authority=bonding_curve,associated_token::token_program=token_program)]pub associated_bonding_curve:InterfaceAccount<'info,anchor_spl::token_interface::TokenAccount>,#[account(mut,token::mint=mint)]pub associated_user:InterfaceAccount<'info,anchor_spl::token_interface::TokenAccount>,#[account(mut)]pub user:Signer<'info>,pub system_program:Program<'info,System>,#[doc="CHECK: PDA checked."]#[account(mut,seeds=[b"creator-vault",bonding_curve.creator.as_ref()],bump)]pub creator_vault:AccountInfo<'info>,pub token_program:Interface<'info,anchor_spl::token_interface::TokenInterface>,
- #[doc="CHECK: event authority."]#[account(seeds=[b"__event_authority"],bump)]pub event_authority:AccountInfo<'info>,#[doc="CHECK: self CPI."]pub program:Program<'info,crate::program::PumpRecovered>,
+ #[doc="CHECK: event authority."]#[account(seeds=[b"__event_authority"],bump)]pub event_authority:AccountInfo<'info>,#[doc="CHECK: self CPI."]pub program:Program<'info,crate::program::GlasspadCurve>,
 }}pub use bonding_curve_instruction_accounts::*;
 
 

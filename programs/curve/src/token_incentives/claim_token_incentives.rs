@@ -36,7 +36,7 @@ pub struct ClaimTokenIncentives<'info> {
     /// CHECK: This is the program's event CPI signer PDA.
     #[account(seeds = [b"__event_authority"], bump)]
     pub event_authority: AccountInfo<'info>,
-    pub program: Program<'info, crate::program::PumpRecovered>,
+    pub program: Program<'info, crate::program::GlasspadCurve>,
     #[account(mut)]
     pub payer: Signer<'info>,
 }
@@ -124,7 +124,7 @@ pub mod cashback {
   pub system_program:Program<'info,System>,
   /// CHECK: constrained event authority PDA.
   #[account(seeds=[b"__event_authority"],bump)]pub event_authority:AccountInfo<'info>,
-  pub program:Program<'info,crate::program::PumpRecovered>,
+  pub program:Program<'info,crate::program::GlasspadCurve>,
  }
  #[derive(Accounts)]
  pub struct ClaimCashbackV2<'info>{
@@ -143,7 +143,7 @@ pub mod cashback {
   pub system_program:Program<'info,System>,
   /// CHECK: constrained event authority PDA.
   #[account(seeds=[b"__event_authority"],bump)]pub event_authority:AccountInfo<'info>,
-  pub program:Program<'info,crate::program::PumpRecovered>,
+  pub program:Program<'info,crate::program::GlasspadCurve>,
  }
  #[event]
  #[derive(Clone)]

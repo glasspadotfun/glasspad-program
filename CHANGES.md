@@ -8,6 +8,6 @@ each line is one commit, in this order. a line is done when the commit exists an
 4. [x] side features removed (entry points + the fee program and volume accumulators out of buy/sell; dead modules still compile and go in change 7): mayhem, cashback, token incentives + volume accumulators, holder rewards, quote-control mints, multi-hop, the fee-program cpi (fees from the consts)
 5. [x] `migrate` → raydium cpmm (`CPMMoo8L3F4NbTegBCKVNunggL7H1ZpdTHKxQB5qKP1C`), lp burned in the same instruction, permissionless
 6. [x] `burn_crank` (+ `seal_platform_coin`: the team wallet names the platform coin once, then it is sealed): permissionless swap of the burn pda's sol for the platform coin on its cpmm pool, min-out from reserves, then burn, with an event
-7. [ ] program id, pda seeds, event names, error strings renamed; crate renamed `glasspad-curve`
+7. [x] program id `DpB6AVXBToz1wqYURvpttSThxcFHyzWe71F1Ufg1escH`, crate `glasspad-curve`, module `glasspad_curve`, the completed-curve error string; pda seeds stay (same curve, our program id makes every pda ours). dead modules still compile: removed after the canary (change 8), they only cost deploy rent
 
 then: devnet deploy + canary, identity build + score, verified build, idl on chain, erase idl authority, burn the upgrade key (mainnet, as the launch event).
