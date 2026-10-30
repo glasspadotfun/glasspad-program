@@ -91,7 +91,6 @@ declare_program!(mayhem);
 pub mod pump_recovered {
     use super::*;
     pub fn initialize(ctx:Context<Initialize>)->Result<()>{global_init::execute(ctx)}
-    pub fn update_global_authority(ctx:Context<UpdateGlobalAuthority>)->Result<()>{update_global_authority_handler(ctx)}
 // layout-pad: aligns the next Source site with the original lib.rs line
 
 
@@ -110,57 +109,7 @@ pub mod pump_recovered {
 
 
 
-    pub fn toggle_create_v2(ctx: Context<AdminGlobal>, enabled: bool) -> Result<()> {
-        require_neq!(ctx.accounts.global.create_v2_enabled, enabled, PumpError::NotAuthorized);
-        ctx.accounts.global.create_v2_enabled = enabled;
-        Ok(())
-    }
 // layout-pad: aligns the next Source site with the original lib.rs line
-
-    pub fn toggle_cashback_enabled(ctx: Context<AdminGlobal>, enabled: bool) -> Result<()> {
-        require_neq!(ctx.accounts.global.is_cashback_enabled, enabled, PumpError::NotAuthorized);
-        ctx.accounts.global.is_cashback_enabled = enabled;
-        Ok(())
-    }
-    pub fn update_holder_reward_config(ctx:Context<AdminGlobal>,is_holder_reward_enabled:bool,holder_reward_claim_authority:Pubkey)->Result<()>{ctx.accounts.global.is_holder_reward_enabled=is_holder_reward_enabled;ctx.accounts.global.holder_reward_claim_authority=holder_reward_claim_authority;Ok(())}
-    pub fn set_max_curve_depth(ctx: Context<AdminGlobal>, max_curve_depth: u8) -> Result<()> {
-        ctx.accounts.global.max_curve_depth = max_curve_depth;
-        Ok(())
-    }
-// layout-pad: aligns the next Source site with the original lib.rs line
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-    pub fn toggle_mayhem_mode(ctx: Context<AdminGlobal>, enabled: bool) -> Result<()> {
-        require_neq!(ctx.accounts.global.mayhem_mode_enabled, enabled, PumpError::NotAuthorized);
-        ctx.accounts.global.mayhem_mode_enabled = enabled;
-        Ok(())
-    }
-    pub fn update_creator_fee_config(ctx:Context<AdminGlobal>,creator_fee_configurable:bool,max_configurable_creator_fee_bps:u64)->Result<()>{
-      ctx.accounts.global.creator_fee_configurable=creator_fee_configurable;ctx.accounts.global.max_configurable_creator_fee_bps=max_configurable_creator_fee_bps;
-      let event=UpdateCreatorFeeConfigEvent{timestamp:Clock::get()?.unix_timestamp,authority:ctx.accounts.authority.key(),creator_fee_configurable,max_configurable_creator_fee_bps};emit!(event);emit_cpi!(event);Ok(())
-    }
-    pub fn add_quote_mint(ctx:Context<AdminGlobal>,quote_mint:Pubkey)->Result<()>{ctx.accounts.global.add_quote_mint(quote_mint)}
-    pub fn remove_quote_mint(ctx:Context<AdminGlobal>,quote_mint:Pubkey)->Result<()>{ctx.accounts.global.remove_quote_mint(quote_mint)}
-    pub fn set_virtual_quote_reserves(ctx:Context<AdminGlobal>,initial_virtual_quote_reserves:u64)->Result<()>{ctx.accounts.global.initial_virtual_quote_reserves=initial_virtual_quote_reserves;Ok(())}
-    pub fn set_params(mut ctx:Context<SetParams>,initial_virtual_token_reserves:u64,initial_virtual_sol_reserves:u64,initial_real_token_reserves:u64,token_total_supply:u64,fee_basis_points:u64,withdraw_authority:Pubkey,enable_migrate:bool,pool_migration_fee:u64,creator_fee_basis_points:u64,set_creator_authority:Pubkey,admin_set_creator_authority:Pubkey)->Result<()>{
-     let recipients=crate::legacy_sell::fee_recipient::set_fee_recipients(&mut ctx)?;
-
-
 
 // layout-pad: aligns the next Source site with the original lib.rs line
 
@@ -180,125 +129,6 @@ pub mod pump_recovered {
 
 
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-     require_gt!(token_total_supply,initial_real_token_reserves,PumpError::InitialRealTokenReservesShouldBeLessThanTokenTotalSupply);
-// layout-pad: aligns the next Source site with the original lib.rs line
-
-
-
-
-     require_gt!(initial_virtual_token_reserves,initial_real_token_reserves,PumpError::InitialVirtualTokenReservesShouldBeGreaterThanInitialRealTokenReserves);
-// layout-pad: aligns the next Source site with the original lib.rs line
-     ctx.accounts.global.initial_virtual_token_reserves=initial_virtual_token_reserves;ctx.accounts.global.initial_real_token_reserves=initial_real_token_reserves;ctx.accounts.global.initial_virtual_sol_reserves=initial_virtual_sol_reserves;ctx.accounts.global.token_total_supply=token_total_supply;
-
-
-
-
-
-
-
-
-
-
-
-     require_gte!(1000u64,fee_basis_points,PumpError::FeeBasisPointsGreaterThanMaximum);
-// layout-pad: aligns the next Source site with the original lib.rs line
-     ctx.accounts.global.fee_basis_points=fee_basis_points;
-
-
-
-
-     require_keys_neq!(withdraw_authority,anchor_lang::system_program::ID,PumpError::AllZerosWithdrawAuthority);
-     ctx.accounts.global.withdraw_authority=withdraw_authority;ctx.accounts.global.enable_migrate=enable_migrate;
-// layout-pad: aligns the next Source site with the original lib.rs line
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-     let final_real_sol_reserves=u64::try_from((initial_real_token_reserves as u128).checked_mul(initial_virtual_sol_reserves as u128).and_then(move|v|v.checked_div((initial_virtual_token_reserves-initial_real_token_reserves) as u128)).ok_or_else(||error!(PumpError::Overflow))?).map_err(|_|error!(PumpError::Truncation))?;
-// layout-pad: aligns the next Source site with the original lib.rs line
-     require_gt!(final_real_sol_reserves,pool_migration_fee,PumpError::PoolMigrationFeeShouldBeLessThanFinalRealSolReserves);
-// layout-pad: aligns the next Source site with the original lib.rs line
-     ctx.accounts.global.pool_migration_fee=pool_migration_fee;
-
-
-
-
-
-     require_gte!(1000u64,creator_fee_basis_points,PumpError::FeeBasisPointsGreaterThanMaximum);
-     let g=&mut ctx.accounts.global;g.creator_fee_basis_points=creator_fee_basis_points;g.set_creator_authority=set_creator_authority;g.admin_set_creator_authority=admin_set_creator_authority;
-
-
-
-
-
-
-
-
-
-
-
-
-     let event=SetParamsEvent{initial_virtual_token_reserves,initial_virtual_sol_reserves,initial_real_token_reserves,token_total_supply,fee_basis_points,withdraw_authority,enable_migrate,pool_migration_fee,creator_fee_basis_points,set_creator_authority,admin_set_creator_authority,final_real_sol_reserves,fee_recipients:recipients,timestamp:Clock::get()?.unix_timestamp};emit!(event);emit_cpi!(event);Ok(())
-    }
-    pub fn set_mayhem_virtual_params(ctx: Context<SetMayhemVirtualParams>) -> Result<()> { mayhem_virtual_params::execute(ctx) }
-    pub fn set_reserved_fee_recipients(ctx:Context<AdminReadonly>,whitelist_pda:Pubkey)->Result<()>{crate::set_reserved_fee_recipients::set_reserved_fee_recipients(ctx,whitelist_pda)
-
-
-
-
-
-    }
 // layout-pad: aligns the next Source site with the original lib.rs line
 
 
@@ -1066,10 +896,6 @@ pub mod pump_recovered {
     }
     pub fn collect_creator_fee_v2(ctx:Context<CollectCreatorFeeV2>)->Result<()>{collect_v2::execute(ctx)}
     pub fn distribute_fee_to_holders<'info>(ctx:Context<'_, '_, '_, 'info,DistributeFeeToHolders<'info>>,amounts:Vec<u64>)->Result<()>{holder_distribution::execute(ctx,amounts)}
-    pub fn set_metaplex_creator(ctx:Context<SetMetaplexCreator>)->Result<()>{set_metaplex_creator::sync(ctx)}
-    pub fn set_creator(ctx:Context<SetCreator>,creator:Pubkey)->Result<()>{set_creator::set(ctx,creator)}
-    pub fn admin_cto(ctx:Context<AdminCto>,is_holder_reward:Option<bool>,creator_fee_bps:Option<u64>,new_creator:Option<Pubkey>)->Result<()>{admin_cto::execute(ctx,is_holder_reward,creator_fee_bps,new_creator)}
-    pub fn admin_update_token_incentives(ctx: Context<AdminUpdateTokenIncentives>, start_time: i64, end_time: i64, seconds_in_a_day: i64, day_number: u64, pump_token_supply_per_day: u64) -> Result<()> { incentives::execute(ctx, start_time, end_time, seconds_in_a_day, day_number, pump_token_supply_per_day) }
     pub fn claim_token_incentives(ctx: Context<ClaimTokenIncentives>) -> Result<()> { token_incentives::claim(ctx) }
     pub fn claim_cashback(ctx:Context<ClaimCashback>)->Result<()>{cashback::claim(ctx)}
     pub fn claim_cashback_v2(ctx:Context<ClaimCashbackV2>)->Result<()>{cashback::claim_v2(ctx)}
@@ -1080,25 +906,10 @@ pub mod pump_recovered {
 
 
     pub fn sync_user_volume_accumulator(ctx:Context<SyncUserVolumeAccumulator>)->Result<()>{volume_sync::execute(ctx)}
-    pub fn admin_set_idl_authority(ctx:Context<AdminSetIdlAuthority>,idl_authority:Pubkey)->Result<()>{idl_authority::execute(ctx,idl_authority)}
     pub fn migrate_bonding_curve_creator(ctx:Context<MigrateBondingCurveCreator>)->Result<()>{creator_migration::execute(ctx)}
     pub fn get_minimum_distributable_fee<'info>(ctx:Context<'_,'_,'_,'info,GetMinimumDistributableFee<'info>>)->Result<MinimumDistributableFeeEvent>{minimum::execute(ctx)}
     pub fn distribute_creator_fees<'info>(ctx:Context<'_,'_,'_,'info,DistributeCreatorFees<'info>>)->Result<DistributeCreatorFeesEvent>{distribution::execute(ctx)}
     pub fn distribute_creator_fees_v2<'info>(ctx:Context<'_,'_,'_,'info,DistributeCreatorFeesV2<'info>>,initialize_ata:bool)->Result<DistributeCreatorFeesEvent>{distribution::execute_v2(ctx,initialize_ata)}
-    pub fn update_buyback_config(ctx:Context<AdminGlobal>,buyback_basis_points:Option<u64>)->Result<()>{crate::set_reserved_fee_recipients::update_buyback_config(ctx,buyback_basis_points)
-
-
-
-
-
-
-    }
-    pub fn initialize_quote_control(ctx: Context<InitializeQuoteControl>) -> Result<()> { quote_control::initialize_quote_control(ctx) }
-    pub fn set_quote_control_admin(ctx: Context<SetQuoteControlAdmin>, new_admin: Pubkey) -> Result<()> { quote_control::set_quote_control_admin(ctx, new_admin) }
-    pub fn add_quote_control_mint(ctx: Context<UpdateQuoteControlMints>, quote_mint: Pubkey, initial_virtual_quote_reserves: u64) -> Result<()> { quote_control::add_quote_control_mint(ctx, quote_mint, initial_virtual_quote_reserves) }
-    pub fn remove_quote_control_mint(ctx: Context<UpdateQuoteControlMints>, quote_mint: Pubkey) -> Result<()> { quote_control::remove_quote_control_mint(ctx, quote_mint) }
-    pub fn set_quote_control_reserves_admin(ctx: Context<SetQuoteControlReservesAdmin>, new_reserves_admin: Pubkey) -> Result<()> { quote_control::set_quote_control_reserves_admin(ctx, new_reserves_admin) }
-    pub fn set_quote_control_mint_reserves(ctx: Context<SetQuoteControlMintReserves>, quote_mint: Pubkey, initial_virtual_quote_reserves: u64) -> Result<()> { quote_control::set_quote_control_mint_reserves(ctx, quote_mint, initial_virtual_quote_reserves) }
 }
 
 #[error_code]
