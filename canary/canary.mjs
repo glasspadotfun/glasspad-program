@@ -97,8 +97,8 @@ async function main() {
     poolAuthorityMintAccount: getAssociatedTokenAddressSync(mint.publicKey, poolAuthority, true),
     poolAuthorityWsolAccount: getAssociatedTokenAddressSync(NATIVE_MINT, poolAuthority, true),
     poolAuthorityLpAccount: getAssociatedTokenAddressSync(lpMint, poolAuthority, true),
-    wsolMint: NATIVE_MINT, team: TEAM, burnPda, cpmmProgram: CPMM.program, ammConfig: CPMM.config, cpmmAuthority,
-    token0Mint: t0, token1Mint: t1, poolState, lpMint, token0Vault: vault(t0), token1Vault: vault(t1), createPoolFee: CPMM.feeReceiver, observationState: observation,
+    wsolMint: NATIVE_MINT, team: TEAM, burnPda,
+    raydium: { cpmmProgram: CPMM.program, ammConfig: CPMM.config, cpmmAuthority, token0Mint: t0, token1Mint: t1, poolState, lpMint, token0Vault: vault(t0), token1Vault: vault(t1), createPoolFee: CPMM.feeReceiver, observationState: observation },
     tokenProgram: TOKEN_PROGRAM_ID, associatedTokenProgram: ASSOCIATED_TOKEN_PROGRAM_ID, systemProgram: SystemProgram.programId, rent: SYSVAR_RENT_PUBKEY, eventAuthority, program: PID,
   }));
   note('pool', null, `${poolState} (lp mint ${lpMint}), team ${cu(await connection.getBalance(TEAM))} sol, burn pda ${cu(await connection.getBalance(burnPda))} sol`);

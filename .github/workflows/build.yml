@@ -33,7 +33,10 @@ jobs:
         run: cargo build-sbf -- --locked && mkdir -p out && cp target/deploy/glasspad_curve.so out/glasspad_curve.mainnet.so
       - name: build (devnet)
         working-directory: programs/curve
-        run: cargo build-sbf -- --locked --features devnet && cp target/deploy/glasspad_curve.so out/glasspad_curve.devnet.so
+        run: |
+          cargo build-sbf -- --locked --features devnet 2>&1 | tee build-devnet.log
+          ! grep -q 'Stack offset' build-devnet.log
+          cp target/deploy/glasspad_curve.so out/glasspad_curve.devnet.so
       - name: anchor cli
         run: |
           curl -sSfL -o /usr/local/bin/anchor https://github.com/coral-xyz/anchor/releases/download/v0.31.1/anchor-0.31.1-x86_64-unknown-linux-gnu

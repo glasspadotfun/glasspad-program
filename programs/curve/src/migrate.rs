@@ -63,7 +63,17 @@ pub struct Migrate<'info> {
     /// CHECK: the burn pda.
     #[account(mut, seeds = [crate::consts::BURN_SEED], bump)]
     pub burn_pda: UncheckedAccount<'info>,
-    // raydium cpmm
+    pub raydium: RaydiumCpmm<'info>,
+    pub token_program: Program<'info, Token>,
+    pub associated_token_program: Program<'info, AssociatedToken>,
+    pub system_program: Program<'info, System>,
+    pub rent: Sysvar<'info, Rent>,
+}
+
+/// raydium's accounts for `initialize`. a nested accounts struct so its checks run in their own stack frame:
+/// with every account in one struct, `Migrate::try_accounts` was over the 4 kb frame limit.
+#[derive(Accounts)]
+pub struct RaydiumCpmm<'info> {
     /// CHECK: pinned program id.
     #[account(address = CPMM_PROGRAM)]
     pub cpmm_program: UncheckedAccount<'info>,
@@ -73,8 +83,7 @@ pub struct Migrate<'info> {
     /// CHECK: raydium's vault and lp mint authority.
     #[account(seeds = [CPMM_AUTH_SEED], bump, seeds::program = cpmm_program.key())]
     pub cpmm_authority: UncheckedAccount<'info>,
-    /// CHECK: token 0 and 1 are the coin and wsol in raydium's order (lower pubkey first).
-    #[account(constraint = (token_0_mint.key() == mint.key() && token_1_mint.key() == wsol_mint.key()) || (token_0_mint.key() == wsol_mint.key() && token_1_mint.key() == mint.key()) @ PumpError::NotAuthorized, constraint = token_0_mint.key() < token_1_mint.key() @ PumpError::NotAuthorized)]
+    /// CHECK: token 0 and 1 are the coin and wsol in raydium's order (lower pubkey first); checked in the handler against mint and wsol_mint.
     pub token_0_mint: UncheckedAccount<'info>,
     /// CHECK: see token_0_mint.
     pub token_1_mint: UncheckedAccount<'info>,
@@ -96,16 +105,13 @@ pub struct Migrate<'info> {
     /// CHECK: raydium observation pda.
     #[account(mut, seeds = [CPMM_OBSERVATION_SEED, pool_state.key().as_ref()], bump, seeds::program = cpmm_program.key())]
     pub observation_state: UncheckedAccount<'info>,
-    pub token_program: Program<'info, Token>,
-    pub associated_token_program: Program<'info, AssociatedToken>,
-    pub system_program: Program<'info, System>,
-    /// CHECK: the rent sysvar, pinned by address. not deserialized: `Sysvar<Rent>` put `try_accounts` 8 bytes over the 4 kb stack frame under platform-tools v1.44 (the identity build).
-    #[account(address = anchor_lang::solana_program::sysvar::rent::ID)]
-    pub rent: UncheckedAccount<'info>,
 }
 
 pub fn execute<'info>(ctx: Context<'_, '_, '_, 'info, Migrate<'info>>) -> Result<()> {
     let a = &ctx.accounts;
+    // raydium's token order: the coin and wsol, lower pubkey first.
+    require!((a.raydium.token_0_mint.key() == a.mint.key() && a.raydium.token_1_mint.key() == a.wsol_mint.key()) || (a.raydium.token_0_mint.key() == a.wsol_mint.key() && a.raydium.token_1_mint.key() == a.mint.key()), PumpError::NotAuthorized);
+    require!(a.raydium.token_0_mint.key() < a.raydium.token_1_mint.key(), PumpError::NotAuthorized);
     crate::trade_types::prepare_bonding_curve(&a.bonding_curve, &a.system_program, &a.user)?;
     require!(a.bonding_curve.complete, PumpError::BondingCurveNotComplete);
     require!(a.bonding_curve.real_quote_reserves != 0 || a.associated_bonding_curve.amount != 0, PumpError::BondingCurveComplete);
@@ -144,7 +150,7 @@ pub fn execute<'info>(ctx: Context<'_, '_, '_, 'info, Migrate<'info>>) -> Result
     anchor_spl::token::sync_native(CpiContext::new(a.token_program.to_account_info(), anchor_spl::token::SyncNative { account: a.pool_authority_wsol_account.to_account_info() }))?;
 
     // 4. the pool, signed by pool_authority as raydium's "creator".
-    let coin_is_0 = a.token_0_mint.key() == mint_key;
+    let coin_is_0 = a.raydium.token_0_mint.key() == mint_key;
     let (amount_0, amount_1) = if coin_is_0 { (base, quote) } else { (quote, base) };
     let (creator_0, creator_1) = if coin_is_0 {
         (a.pool_authority_mint_account.to_account_info(), a.pool_authority_wsol_account.to_account_info())
@@ -159,19 +165,19 @@ pub fn execute<'info>(ctx: Context<'_, '_, '_, 'info, Migrate<'info>>) -> Result
         program_id: CPMM_PROGRAM,
         accounts: vec![
             AccountMeta::new(a.pool_authority.key(), true),
-            AccountMeta::new_readonly(a.amm_config.key(), false),
-            AccountMeta::new_readonly(a.cpmm_authority.key(), false),
-            AccountMeta::new(a.pool_state.key(), false),
-            AccountMeta::new_readonly(a.token_0_mint.key(), false),
-            AccountMeta::new_readonly(a.token_1_mint.key(), false),
-            AccountMeta::new(a.lp_mint.key(), false),
+            AccountMeta::new_readonly(a.raydium.amm_config.key(), false),
+            AccountMeta::new_readonly(a.raydium.cpmm_authority.key(), false),
+            AccountMeta::new(a.raydium.pool_state.key(), false),
+            AccountMeta::new_readonly(a.raydium.token_0_mint.key(), false),
+            AccountMeta::new_readonly(a.raydium.token_1_mint.key(), false),
+            AccountMeta::new(a.raydium.lp_mint.key(), false),
             AccountMeta::new(creator_0.key(), false),
             AccountMeta::new(creator_1.key(), false),
             AccountMeta::new(a.pool_authority_lp_account.key(), false),
-            AccountMeta::new(a.token_0_vault.key(), false),
-            AccountMeta::new(a.token_1_vault.key(), false),
-            AccountMeta::new(a.create_pool_fee.key(), false),
-            AccountMeta::new(a.observation_state.key(), false),
+            AccountMeta::new(a.raydium.token_0_vault.key(), false),
+            AccountMeta::new(a.raydium.token_1_vault.key(), false),
+            AccountMeta::new(a.raydium.create_pool_fee.key(), false),
+            AccountMeta::new(a.raydium.observation_state.key(), false),
             AccountMeta::new_readonly(a.token_program.key(), false),
             AccountMeta::new_readonly(a.token_program.key(), false),
             AccountMeta::new_readonly(a.token_program.key(), false),
@@ -184,11 +190,11 @@ pub fn execute<'info>(ctx: Context<'_, '_, '_, 'info, Migrate<'info>>) -> Result
     invoke_signed(
         &ix,
         &[
-            a.pool_authority.to_account_info(), a.amm_config.to_account_info(), a.cpmm_authority.to_account_info(), a.pool_state.to_account_info(),
-            a.token_0_mint.to_account_info(), a.token_1_mint.to_account_info(), a.lp_mint.to_account_info(), creator_0, creator_1,
-            a.pool_authority_lp_account.to_account_info(), a.token_0_vault.to_account_info(), a.token_1_vault.to_account_info(),
-            a.create_pool_fee.to_account_info(), a.observation_state.to_account_info(), a.token_program.to_account_info(),
-            a.associated_token_program.to_account_info(), a.system_program.to_account_info(), a.rent.to_account_info(), a.cpmm_program.to_account_info(),
+            a.pool_authority.to_account_info(), a.raydium.amm_config.to_account_info(), a.raydium.cpmm_authority.to_account_info(), a.raydium.pool_state.to_account_info(),
+            a.raydium.token_0_mint.to_account_info(), a.raydium.token_1_mint.to_account_info(), a.raydium.lp_mint.to_account_info(), creator_0, creator_1,
+            a.pool_authority_lp_account.to_account_info(), a.raydium.token_0_vault.to_account_info(), a.raydium.token_1_vault.to_account_info(),
+            a.raydium.create_pool_fee.to_account_info(), a.raydium.observation_state.to_account_info(), a.token_program.to_account_info(),
+            a.associated_token_program.to_account_info(), a.system_program.to_account_info(), a.rent.to_account_info(), a.raydium.cpmm_program.to_account_info(),
         ],
         signer,
     )?;
@@ -199,7 +205,7 @@ pub fn execute<'info>(ctx: Context<'_, '_, '_, 'info, Migrate<'info>>) -> Result
         anchor_spl::token::TokenAccount::try_deserialize_unchecked(&mut &data[..])?.amount
     };
     anchor_spl::token::burn(
-        CpiContext::new_with_signer(a.token_program.to_account_info(), anchor_spl::token::Burn { mint: a.lp_mint.to_account_info(), from: a.pool_authority_lp_account.to_account_info(), authority: a.pool_authority.to_account_info() }, signer),
+        CpiContext::new_with_signer(a.token_program.to_account_info(), anchor_spl::token::Burn { mint: a.raydium.lp_mint.to_account_info(), from: a.pool_authority_lp_account.to_account_info(), authority: a.pool_authority.to_account_info() }, signer),
         lp_amount,
     )?;
     for acc in [&a.pool_authority_lp_account, &a.pool_authority_mint_account, &a.pool_authority_wsol_account] {
@@ -222,7 +228,7 @@ pub fn execute<'info>(ctx: Context<'_, '_, '_, 'info, Migrate<'info>>) -> Result
         c.real_quote_reserves = 0; c.real_token_reserves = 0; c.virtual_quote_reserves = 0; c.virtual_token_reserves = 0;
     }
     let a = &ctx.accounts;
-    let event = GraduateEvent { user: a.user.key(), mint: mint_key, token_amount: base, sol_amount: quote, migration_fee: fee, team_fee: to_team, burn_fee: to_burn, pool: a.pool_state.key(), lp_burned: lp_amount, timestamp: Clock::get()?.unix_timestamp };
+    let event = GraduateEvent { user: a.user.key(), mint: mint_key, token_amount: base, sol_amount: quote, migration_fee: fee, team_fee: to_team, burn_fee: to_burn, pool: a.raydium.pool_state.key(), lp_burned: lp_amount, timestamp: Clock::get()?.unix_timestamp };
     emit!(event); emit_cpi!(event);
     Ok(())
 }
