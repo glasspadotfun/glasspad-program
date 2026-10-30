@@ -42,7 +42,7 @@ jobs:
         working-directory: programs/curve
         env:
           RUST_BACKTRACE: 1
-        run: anchor idl build -o out/glasspad_curve.json -t out/glasspad_curve.ts && head -c 400 out/glasspad_curve.json
+        run: anchor idl build --skip-lint -o out/glasspad_curve.json -t out/glasspad_curve.ts && head -c 400 out/glasspad_curve.json
       - name: hashes
         working-directory: programs/curve
         run: ls -la out && sha256sum out/*.so

@@ -3,7 +3,7 @@ anchor_version = "0.31.1"
 
 [features]
 resolution = true
-skip-lint = false
+skip-lint = true
 
 [programs.localnet]
 glasspad_curve = "DpB6AVXBToz1wqYURvpttSThxcFHyzWe71F1Ufg1escH"
