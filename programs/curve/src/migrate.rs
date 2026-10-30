@@ -5,7 +5,7 @@
 use crate::*;
 use anchor_lang::prelude::*;
 use anchor_spl::{associated_token::AssociatedToken, token::Token, token_interface::{Mint, TokenAccount}};
-use anchor_lang::solana_program::{instruction::{AccountMeta, Instruction}, program::invoke_signed};
+use anchor_lang::solana_program::{instruction::{AccountMeta, Instruction}, program::{invoke, invoke_signed}};
 
 /// raydium cpmm (mainnet; the `devnet` feature switches all three to raydium's devnet deployment).
 #[cfg(not(feature = "devnet"))]
@@ -136,7 +136,10 @@ pub fn execute<'info>(ctx: Context<'_, '_, '_, 'info, Migrate<'info>>) -> Result
         .checked_sub(fee).ok_or_else(|| error!(PumpError::Overflow))?;
     a.bonding_curve.sub_lamports(quote)?;
     a.pool_authority_wsol_account.add_lamports(quote)?;
-    anchor_spl::token::sync_native(CpiContext::new(a.token_program.to_account_info(), anchor_spl::token::SyncNative { account: a.pool_authority_wsol_account.to_account_info() }))?;
+    invoke(
+        &Instruction { program_id: anchor_spl::token::ID, accounts: vec![AccountMeta::new(a.pool_authority_wsol_account.key(), false), AccountMeta::new(a.bonding_curve.key(), false)], data: vec![17] }, // sync_native
+        &[a.pool_authority_wsol_account.to_account_info(), a.bonding_curve.to_account_info()],
+    )?;
 
     // 4. the pool, signed by pool_authority as raydium's "creator".
     let coin_is_0 = a.token_0_mint.key() == mint_key;
@@ -232,10 +235,11 @@ fn create_ata<'info>(a: &Migrate<'info>, account: &UncheckedAccount<'info>, mint
             AccountMeta::new_readonly(mint.key(), false),
             AccountMeta::new_readonly(a.system_program.key(), false),
             AccountMeta::new_readonly(a.token_program.key(), false),
+            AccountMeta::new(a.bonding_curve.key(), false), // rides along so the runtime sees the fee move balanced
         ],
         data: vec![1], // create idempotent
     };
-    invoke_signed(&ix, &[a.pool_authority.to_account_info(), account.to_account_info(), a.pool_authority.to_account_info(), mint.clone(), a.system_program.to_account_info(), a.token_program.to_account_info()], signer)?;
+    invoke_signed(&ix, &[a.pool_authority.to_account_info(), account.to_account_info(), a.pool_authority.to_account_info(), mint.clone(), a.system_program.to_account_info(), a.token_program.to_account_info(), a.bonding_curve.to_account_info()], signer)?;
     Ok(())
 }
 

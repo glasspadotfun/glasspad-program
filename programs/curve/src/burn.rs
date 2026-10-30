@@ -121,9 +121,11 @@ pub fn burn_crank(ctx: Context<BurnCrank>) -> Result<()> {
     let amount_in = a.burn_pda.lamports().saturating_sub(BURN_PDA_FLOOR);
     require_gt!(amount_in, 0, PumpError::BuyZeroAmount);
 
-    // wrap.
-    a.burn_pda.sub_lamports(amount_in)?;
-    a.burn_wsol_account.add_lamports(amount_in)?;
+    // wrap: the burn pda is a system-owned pda, so it pays through the system program, signed by its seeds.
+    anchor_lang::system_program::transfer(
+        CpiContext::new_with_signer(a.system_program.to_account_info(), anchor_lang::system_program::Transfer { from: a.burn_pda.to_account_info(), to: a.burn_wsol_account.to_account_info() }, signer),
+        amount_in,
+    )?;
     anchor_spl::token::sync_native(CpiContext::new(a.token_program.to_account_info(), anchor_spl::token::SyncNative { account: a.burn_wsol_account.to_account_info() }))?;
 
     // minimum out from the pool's reserves, read in this same transaction.
