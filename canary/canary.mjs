@@ -110,7 +110,7 @@ async function main() {
       global, user: deployer.publicKey, burnPda, platformCoin: mint.publicKey, wsolMint: NATIVE_MINT,
       burnWsolAccount: getAssociatedTokenAddressSync(NATIVE_MINT, burnPda, true), burnCoinAccount: getAssociatedTokenAddressSync(mint.publicKey, burnPda, true),
       cpmmProgram: CPMM.program, ammConfig: CPMM.config, cpmmAuthority, token0Mint: t0, token1Mint: t1, poolState, token0Vault: vault(t0), token1Vault: vault(t1), observationState: observation,
-      tokenProgram: TOKEN_PROGRAM_ID, systemProgram: SystemProgram.programId, eventAuthority, program: PID,
+      tokenProgram: TOKEN_PROGRAM_ID, associatedTokenProgram: ASSOCIATED_TOKEN_PROGRAM_ID, systemProgram: SystemProgram.programId, eventAuthority, program: PID,
     }));
     note('burn', null, `burn pda ${cu(before)} → ${cu(await connection.getBalance(burnPda))} sol`);
   }

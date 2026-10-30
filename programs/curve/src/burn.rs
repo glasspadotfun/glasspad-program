@@ -5,7 +5,7 @@
 //! reserves in the same transaction, and burns every token it gets.
 use crate::*;
 use anchor_lang::prelude::*;
-use anchor_spl::{token::Token, token_interface::Mint};
+use anchor_spl::{associated_token::AssociatedToken, token::Token, token_interface::Mint};
 use anchor_lang::solana_program::{instruction::{AccountMeta, Instruction}, program::invoke_signed};
 use crate::migrate::{CPMM_PROGRAM, CPMM_AMM_CONFIG};
 
@@ -86,6 +86,7 @@ pub struct BurnCrank<'info> {
     #[account(mut, seeds = [CPMM_OBSERVATION_SEED, pool_state.key().as_ref()], bump, seeds::program = cpmm_program.key())]
     pub observation_state: UncheckedAccount<'info>,
     pub token_program: Program<'info, Token>,
+    pub associated_token_program: Program<'info, AssociatedToken>,
     pub system_program: Program<'info, System>,
 }
 
@@ -115,7 +116,7 @@ pub fn burn_crank(ctx: Context<BurnCrank>) -> Result<()> {
             ],
             data: vec![1],
         };
-        invoke_signed(&ix, &[a.burn_pda.to_account_info(), acc.to_account_info(), a.burn_pda.to_account_info(), mint, a.system_program.to_account_info(), a.token_program.to_account_info()], signer)?;
+        invoke_signed(&ix, &[a.burn_pda.to_account_info(), acc.to_account_info(), a.burn_pda.to_account_info(), mint, a.system_program.to_account_info(), a.token_program.to_account_info(), a.associated_token_program.to_account_info()], signer)?;
     }
     // the ata creation above may have spent rent from the pda; recompute what is left to swap.
     let amount_in = a.burn_pda.lamports().saturating_sub(BURN_PDA_FLOOR);
