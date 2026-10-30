@@ -1,0 +1,19 @@
+[toolchain]
+anchor_version = "0.31.1"
+
+[features]
+resolution = true
+skip-lint = false
+
+[programs.localnet]
+glasspad_curve = "DpB6AVXBToz1wqYURvpttSThxcFHyzWe71F1Ufg1escH"
+
+[programs.devnet]
+glasspad_curve = "DpB6AVXBToz1wqYURvpttSThxcFHyzWe71F1Ufg1escH"
+
+[programs.mainnet]
+glasspad_curve = "DpB6AVXBToz1wqYURvpttSThxcFHyzWe71F1Ufg1escH"
+
+[provider]
+cluster = "devnet"
+wallet = "~/.config/solana/id.json"
