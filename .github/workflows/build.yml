@@ -30,14 +30,21 @@ jobs:
         working-directory: programs/curve
         env:
           RUST_BACKTRACE: 1
-        run: cargo build-sbf -- --locked && mkdir -p out && cp target/deploy/*.so out/glasspad_curve.mainnet.so
+        run: cargo build-sbf -- --locked && mkdir -p out && cp target/deploy/glasspad_curve.so out/glasspad_curve.mainnet.so
       - name: build (devnet)
         working-directory: programs/curve
-        run: cargo build-sbf -- --locked --features devnet && cp target/deploy/*.so out/glasspad_curve.devnet.so
+        run: cargo build-sbf -- --locked --features devnet && cp target/deploy/glasspad_curve.so out/glasspad_curve.devnet.so
+      - name: anchor cli
+        run: |
+          curl -sSfL -o /usr/local/bin/anchor https://github.com/coral-xyz/anchor/releases/download/v0.31.1/anchor-0.31.1-x86_64-unknown-linux-gnu
+          chmod +x /usr/local/bin/anchor && anchor --version
+      - name: idl
+        working-directory: programs/curve
+        run: anchor idl build -o out/glasspad_curve.json -t out/glasspad_curve.ts && head -c 400 out/glasspad_curve.json
       - name: hashes
         working-directory: programs/curve
         run: ls -la out && sha256sum out/*.so
       - uses: actions/upload-artifact@v4
         with:
           name: curve-so
-          path: programs/curve/out/*.so
+          path: programs/curve/out/*

@@ -3,7 +3,11 @@ use anchor_lang::prelude::*;
 
 /// curve: the same numbers every degen already knows (6-decimal tokens).
 pub const INITIAL_VIRTUAL_TOKEN_RESERVES: u64 = 1_073_000_000_000_000;
+#[cfg(not(feature = "devnet"))]
 pub const INITIAL_VIRTUAL_SOL_RESERVES: u64 = 30_000_000_000;
+/// devnet test build only: a curve that fills with ~0.85 sol instead of ~85, same maths.
+#[cfg(feature = "devnet")]
+pub const INITIAL_VIRTUAL_SOL_RESERVES: u64 = 300_000_000;
 pub const INITIAL_REAL_TOKEN_RESERVES: u64 = 793_100_000_000_000;
 pub const TOKEN_TOTAL_SUPPLY: u64 = 1_000_000_000_000_000;
 
@@ -13,7 +17,10 @@ pub const CREATOR_FEE_BPS: u64 = 40;
 /// share of the protocol fee that goes to the burn pda (the rest goes to `TEAM`).
 pub const BUYBACK_BPS: u64 = 5000;
 /// taken from the curve's sol when a coin graduates, split like the protocol fee.
+#[cfg(not(feature = "devnet"))]
 pub const POOL_MIGRATION_FEE: u64 = 1_000_000_000;
+#[cfg(feature = "devnet")]
+pub const POOL_MIGRATION_FEE: u64 = 200_000_000;
 
 /// the team's half of the protocol fee lands here. published on the docs page.
 pub const TEAM: Pubkey = anchor_lang::solana_program::pubkey!("6r8QzyMGZ12rsDFYDakrM7j5i52VNY28KKZTTQRWikGs");
