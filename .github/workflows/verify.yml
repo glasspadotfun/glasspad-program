@@ -30,7 +30,7 @@ jobs:
           echo "b9d5ccce9634dc14269cab3e7a58649bc141b3306e7735a94478c936341f211f  /usr/local/bin/solana-verify" | sha256sum -c -
           chmod +x /usr/local/bin/solana-verify && solana-verify --version
       - name: deterministic build (${{ matrix.name }})
-        run: solana-verify build --library-name glasspad_curve programs/curve ${{ matrix.args }}
+        run: solana-verify build --library-name glasspad_curve "$GITHUB_WORKSPACE/programs/curve" ${{ matrix.args }}
       - name: hash
         run: |
           mkdir -p out
