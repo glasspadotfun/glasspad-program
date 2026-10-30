@@ -54,7 +54,7 @@ pub struct Migrate<'info> {
     pub pool_authority_wsol_account: UncheckedAccount<'info>,
     /// CHECK: ata of pool_authority for the lp, made by raydium, burned and closed here.
     #[account(mut)]
-    pub pool_authority_lp_account: UncheckedAccount<'info>,
+    pub pool_authority_lp_account: Box<UncheckedAccount<'info>>,
     #[account(address = anchor_spl::token::spl_token::native_mint::ID)]
     pub wsol_mint: Box<InterfaceAccount<'info, Mint>>,
     /// CHECK: the team wallet, pinned in the source.
@@ -92,15 +92,16 @@ pub struct Migrate<'info> {
     pub token_1_vault: UncheckedAccount<'info>,
     /// CHECK: pinned by address.
     #[account(mut, address = CPMM_CREATE_POOL_FEE)]
-    pub create_pool_fee: UncheckedAccount<'info>,
+    pub create_pool_fee: Box<UncheckedAccount<'info>>,
     /// CHECK: raydium observation pda.
     #[account(mut, seeds = [CPMM_OBSERVATION_SEED, pool_state.key().as_ref()], bump, seeds::program = cpmm_program.key())]
-    pub observation_state: UncheckedAccount<'info>,
+    pub observation_state: Box<UncheckedAccount<'info>>,
     pub token_program: Program<'info, Token>,
     pub associated_token_program: Program<'info, AssociatedToken>,
     pub system_program: Program<'info, System>,
     pub rent: Sysvar<'info, Rent>,
 }
+// three accounts are boxed so `try_accounts` fits the 4 kb stack frame under platform-tools v1.44 (the identity build).
 
 pub fn execute<'info>(ctx: Context<'_, '_, '_, 'info, Migrate<'info>>) -> Result<()> {
     let a = &ctx.accounts;
@@ -200,7 +201,7 @@ pub fn execute<'info>(ctx: Context<'_, '_, '_, 'info, Migrate<'info>>) -> Result
         CpiContext::new_with_signer(a.token_program.to_account_info(), anchor_spl::token::Burn { mint: a.lp_mint.to_account_info(), from: a.pool_authority_lp_account.to_account_info(), authority: a.pool_authority.to_account_info() }, signer),
         lp_amount,
     )?;
-    for acc in [&a.pool_authority_lp_account, &a.pool_authority_mint_account, &a.pool_authority_wsol_account] {
+    for acc in [&*a.pool_authority_lp_account, &a.pool_authority_mint_account, &a.pool_authority_wsol_account] {
         anchor_spl::token::close_account(CpiContext::new_with_signer(
             a.token_program.to_account_info(),
             anchor_spl::token::CloseAccount { account: acc.to_account_info(), destination: a.pool_authority.to_account_info(), authority: a.pool_authority.to_account_info() },

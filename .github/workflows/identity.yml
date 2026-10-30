@@ -47,7 +47,7 @@ jobs:
       - name: platform-tools v1.44 (linux x86_64)
         run: |
           curl --fail --location --retry 3 https://github.com/anza-xyz/platform-tools/releases/download/v1.44/platform-tools-linux-x86_64.tar.bz2 -o "$RUNNER_TEMP/sdk.tar.bz2"
-          sha256sum "$RUNNER_TEMP/sdk.tar.bz2"
+          echo "6719b889d60677a8a2fcf4c82f68441a1afe0ab093edd2efe9f84a67a808b3e9  $RUNNER_TEMP/sdk.tar.bz2" | sha256sum -c -
           mkdir -p "$SDK" && tar -xjf "$RUNNER_TEMP/sdk.tar.bz2" -C "$SDK"
           head -3 "$SDK/version.md"
           python3 -B tooling/reconstruction/toolchain/bootstrap.py --sdk-check full
