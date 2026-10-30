@@ -32,7 +32,7 @@ pub fn execute(ctx:Context<Initialize>)->Result<()>{
  g.whitelisted_quote_mints=[Pubkey::default();1];
  g.creator_fee_configurable=false;
  g.max_configurable_creator_fee_bps=0;
- g.holder_reward_claim_authority=Pubkey::default();
+ g.platform_coin=Pubkey::default();
  g.is_holder_reward_enabled=false;
  g.max_curve_depth=0;
  Ok(())

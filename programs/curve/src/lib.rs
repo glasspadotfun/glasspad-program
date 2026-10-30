@@ -1,4 +1,6 @@
 pub mod consts;
+pub mod burn;
+pub use burn::*;
 #[path="admin_set_idl_authority.rs"]pub mod idl_authority;#[path="buy.rs"]pub mod legacy_buy;pub mod buy_v2;
 pub use buy_v2::*;
 pub mod create_v2;
@@ -11,8 +13,6 @@ pub use collect_v2::*;
 pub use distribution::*;
 pub use distribution::minimum;
 pub use minimum::*;
-#[path="creator/distribute_fee_to_holders.rs"]pub mod holder_distribution;
-pub use holder_distribution::*;
 #[path="creator/migrate_bonding_curve_creator.rs"]pub mod creator_migration;
 pub use creator_migration::*;
 #[path="creator/set_creator.rs"]pub mod set_creator;#[path="creator/set_metaplex_creator.rs"]pub mod set_metaplex_creator;
@@ -848,6 +848,8 @@ pub mod pump_recovered {
      emit!(event);emit_cpi!(event);Ok(())
     }
     pub fn migrate<'info>(ctx:Context<'_,'_,'_,'info,Migrate<'info>>)->Result<()>{migrate::execute(ctx)}
+    pub fn seal_platform_coin(ctx:Context<SealPlatformCoin>)->Result<()>{burn::seal_platform_coin(ctx)}
+    pub fn burn_crank(ctx:Context<BurnCrank>)->Result<()>{burn::burn_crank(ctx)}
     pub fn extend_account(ctx:Context<ExtendAccount>)->Result<()>{extend::execute(ctx)}
     pub fn collect_creator_fee(ctx:Context<CollectCreatorFee>)->Result<()>{collect_v2::collect_creator_fee(ctx)
 
@@ -1606,7 +1608,7 @@ pub struct Global {
     pub whitelisted_quote_mints: [Pubkey; 1],
     pub creator_fee_configurable: bool,
     pub max_configurable_creator_fee_bps: u64,
-    pub holder_reward_claim_authority: Pubkey,
+    pub platform_coin: Pubkey,
     pub is_holder_reward_enabled: bool,
     pub max_curve_depth: u8,
 }

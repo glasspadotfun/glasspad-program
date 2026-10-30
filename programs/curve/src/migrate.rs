@@ -244,3 +244,16 @@ pub struct GraduateEvent {
     pub lp_burned: u64,
     pub timestamp: i64,
 }
+
+// shims for modules that are dead but still compiled until change 7 removes them.
+pub use crate::payments::migrate_transfer_native as transfer_native;
+#[derive(Clone)] pub struct DistributionCurve { pub creator: Pubkey, pub quote_mint: Pubkey }
+impl Owner for DistributionCurve { fn owner() -> Pubkey { crate::ID } }
+impl AccountSerialize for DistributionCurve {}
+impl AccountDeserialize for DistributionCurve {
+    fn try_deserialize(buf: &mut &[u8]) -> Result<Self> { Self::try_deserialize_unchecked(buf) }
+    fn try_deserialize_unchecked(buf: &mut &[u8]) -> Result<Self> {
+        if buf.len() < 115 || buf[..8] != [23, 183, 248, 55, 96, 216, 172, 96] { return Err(anchor_lang::solana_program::program_error::ProgramError::InvalidAccountData.into()); }
+        Ok(Self { creator: Pubkey::new_from_array(buf[49..81].try_into().unwrap_or_default()), quote_mint: Pubkey::new_from_array(buf[83..115].try_into().unwrap_or_default()) })
+    }
+}
