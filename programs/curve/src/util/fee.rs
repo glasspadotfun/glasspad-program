@@ -42,121 +42,19 @@ const USDC:Pubkey=anchor_lang::solana_program::pubkey!("EPjFWdd5AufqSSqeM2qN1xzy
 /// Shared fee query and accounting. Account clones are created here before
 /// the fallible market-cap calculation, as in the original outer helper.
 pub fn trade_fees<'info>(
-    global: &Account<'info, crate::Global>,
+    _global: &Account<'info, crate::Global>,
     curve: &Account<'info, BondingCurve>,
-    mint: &InterfaceAccount<'info, anchor_spl::token_interface::Mint>,
-    fee_config: &Account<'info, crate::legacy_sell::LegacyFeeConfig>,
-    fee_program: &Program<'info, crate::legacy_sell::LegacyFeesProgram>,
-    program: &AccountInfo<'info>,
+    _mint: &InterfaceAccount<'info, anchor_spl::token_interface::Mint>,
+    _fee_config: &Account<'info, crate::legacy_sell::LegacyFeeConfig>,
+    _fee_program: &Program<'info, crate::legacy_sell::LegacyFeesProgram>,
+    _program: &AccountInfo<'info>,
     quote_amount: u64,
 ) -> Result<(u64, u64, u64, u64)> {
-    let fees = crate::pump_fees::cpi::get_fees_with_quote_mint(CpiContext::new(
-        fee_program.to_account_info(),
-        crate::pump_fees::cpi::accounts::GetFeesWithQuoteMint {
-            fee_config: fee_config.to_account_info(),
-            config_program_id: program.clone(),
-        },
-    ),
-    true, crate::buy_fee_market_cap(curve, mint)?, curve.quote_mint)?.get();
-
-    let (protocol_fee_bps, creator_fee_bps) = (fees.protocol_fee_bps, fees.creator_fee_bps);
-    let creator_fee_bps = if global.creator_fee_configurable && curve.creator_fee_bps != 0 { curve.creator_fee_bps } else { creator_fee_bps };
-    let protocol_fee = fee(quote_amount, protocol_fee_bps)?;
-    let creator_fee = if curve.creator != Pubkey::default() { fee(quote_amount, creator_fee_bps)? } else { 0 };
-
-
-
-
-
-
-
-    return Ok((protocol_fee, creator_fee, protocol_fee_bps, creator_fee_bps));
+    // no fee program, no tiers, no market-cap lookup: two constants.
+    let protocol_fee = fee(quote_amount, crate::consts::PROTOCOL_FEE_BPS)?;
+    let creator_fee = if curve.creator != Pubkey::default() { fee(quote_amount, crate::consts::CREATOR_FEE_BPS)? } else { 0 };
+    Ok((protocol_fee, creator_fee, crate::consts::PROTOCOL_FEE_BPS, crate::consts::CREATOR_FEE_BPS))
 }
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 pub fn calculate_fee_tier(fee_tiers: &[FeeTier], market_cap: u128) -> Result<(u64, u64)> {
     // fee tiers must be non-empty
     require!(!fee_tiers.is_empty(), crate::PumpError::FeeTiersEmpty);
