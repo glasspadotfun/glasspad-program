@@ -1,5 +1,4 @@
 use anchor_lang::prelude::*;
-use crate::reserved_bonding_curve_fees;
 #[derive(AnchorSerialize, AnchorDeserialize, Clone)]
 pub struct BondingCurve {
     pub virtual_token_reserves: u64,

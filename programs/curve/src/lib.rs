@@ -1,21 +1,28 @@
 pub mod consts;
 pub mod burn;
-pub use burn::*;
+pub use burn::{BurnCrank, SealPlatformCoin};
+// anchor's #[program] expects the generated client-account modules at the crate root.
+pub(crate) use burn::{__client_accounts_burn_crank, __client_accounts_seal_platform_coin};
+#[cfg(feature = "cpi")] pub(crate) use burn::{__cpi_client_accounts_burn_crank, __cpi_client_accounts_seal_platform_coin};
 #[path="buy.rs"]pub mod legacy_buy;
 pub mod creator{#[path="collect_creator_fee.rs"]pub mod collect_creator_fee;}pub use creator::collect_creator_fee as collect_v2;
-pub use collect_v2::*;
+pub use collect_v2::CollectCreatorFee;
+pub(crate) use collect_v2::__client_accounts_collect_creator_fee;
+#[cfg(feature = "cpi")] pub(crate) use collect_v2::__cpi_client_accounts_collect_creator_fee;
 #[path="legacy_native_payments.rs"]pub mod legacy_native_payments;
-pub use legacy_buy::*;
 #[path="extend_account.rs"]pub mod extend;#[path = "fee_recipient.rs"] pub(crate) mod fee_recipient;
-pub use extend::*;
+pub use extend::ExtendAccount;
+pub(crate) use extend::__client_accounts_extend_account;
+#[cfg(feature = "cpi")] pub(crate) use extend::__cpi_client_accounts_extend_account;
 pub mod migrate;
-pub use migrate::*;
+pub use migrate::Migrate;
+pub(crate) use migrate::__client_accounts_migrate;
+#[cfg(feature = "cpi")] pub(crate) use migrate::__cpi_client_accounts_migrate;
 #[path="sell.rs"]pub mod legacy_sell;
 pub use legacy_sell::*;
 #[path="util/constant_product.rs"] pub mod constant_product; #[path="util/fee.rs"] pub mod fee_math;#[path="util/payments.rs"] pub mod payments;
 #[path="curve_quote_payments.rs"] pub mod quote_payments;
 pub mod global_init;
-pub use global_init::*;
 pub mod create;
 pub use create::*;
 
@@ -562,7 +569,7 @@ pub mod glasspad_curve {
      Ok(())
     }
     pub fn buy_exact_sol_in<'info>(ctx:Context<'_,'_,'_,'info,LegacyBuy<'info>>,spendable_sol_in:u64,min_tokens_out:u64,track_volume:OptionBool,partial_fill:OptionBool)->Result<()>{legacy_buy::buy_exact_sol_in(ctx,spendable_sol_in,min_tokens_out,track_volume,partial_fill)}
-    pub fn sell<'info>(ctx:Context<'_,'_,'info,'info,LegacySell<'info>>,amount:u64,min_sol_output:u64)->Result<()>{let minimum=min_sol_output;
+    pub fn sell<'info>(ctx:Context<'_,'_,'info,'info,LegacySell<'info>>,amount:u64,min_sol_output:u64)->Result<()>{
      let fee_recipient=&ctx.accounts.fee_recipient;let user=&ctx.accounts.user;
      let bonding_curve=&mut ctx.accounts.bonding_curve;let (associated_bonding_curve,associated_user,token_program)=(&ctx.accounts.associated_bonding_curve,&ctx.accounts.associated_user,&ctx.accounts.token_program);
      crate::trade_types::prepare_bonding_curve(bonding_curve,&ctx.accounts.system_program,user)?;
@@ -2238,58 +2245,6 @@ pub fn reserved_bonding_curve_fees(curve: &trade_types::BondingCurve) -> Result<
         .ok_or_else(|| error!(crate::PumpError::Overflow))
 }
 
-// layout-pad: aligns the next Source site with the original lib.rs line
-impl crate::trade_types::BondingCurve {
-    // The original handler calls a separate helper at 0xa23f0.
-    #[inline(never)]
-    pub(crate) fn sync_virtual_quote_reserves(
-        &mut self,
-        initial_real_token_reserves: u64,
-        vault_amount: u64,
-        quote_mint: &Pubkey,
-    ) -> Result<()> {
-        let bc = self;
-        if bc.complete || !bc.is_mayhem_mode {
-            return Ok(());
-        }
-        let real_quote_reserves = bc.real_quote_reserves;
-        let virtual_token_reserves = bc.virtual_token_reserves;
-        let denominator = bc
-            .token_total_supply
-            .checked_mul(2)
-            .ok_or(PumpError::Overflow)?
-            .checked_sub(initial_real_token_reserves)
-            .ok_or(PumpError::Overflow)?
-            .checked_sub(vault_amount)
-            .ok_or(PumpError::Overflow)?;
-        if *quote_mint == Pubkey::default() {
-            if real_quote_reserves < 10_000_000 || denominator < 1_000_000_000_000 {
-                return Ok(());
-            }
-        } else if real_quote_reserves < 1_000_000 || denominator < 1_000_000_000_000 {
-            return Ok(());
-        }
-        // Keep these fallible operations separate: the captured helper has
-        // distinct Overflow returns for multiplication and division.
-        let numerator = (denominator as u128)
-            .checked_add(virtual_token_reserves as u128)
-            .ok_or(PumpError::Overflow)?
-            .checked_mul(real_quote_reserves as u128)
-            .ok_or(PumpError::Overflow)?;
-        let computed = numerator
-            .checked_div(denominator as u128)
-            .ok_or(PumpError::Overflow)?;
-        // Conversion precedes the cap in both captured branches.
-        if *quote_mint == Pubkey::default() {
-            let amount = u64::try_from(computed)?;
-            bc.virtual_quote_reserves = amount.min(2_000_000_000_000);
-        } else {
-            let amount = u64::try_from(computed)?;
-            bc.virtual_quote_reserves = amount.min(160_000_000_000);
-        }
-        Ok(())
-    }
-}
 
 
 
@@ -2627,9 +2582,6 @@ pub struct OptionBool(pub bool);
 
 // Shared user-signed quote payment helpers.
 pub mod user_quote_payments {
-    use anchor_lang::prelude::*;
-    use anchor_spl::token_interface::TokenInterface;
-    use crate::trade_types::BondingCurve;
 
 pub use crate::payments::uqp_transfer_native as transfer_native;
 // layout-pad

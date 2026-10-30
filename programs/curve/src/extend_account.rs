@@ -54,7 +54,7 @@ pub fn execute(ctx: Context<ExtendAccount>) -> Result<()> {
         .minimum_balance(new_size)
         .saturating_sub(rent.minimum_balance(current_size));
     transfer_lamports(&ctx.accounts, delta)?;
-    account.realloc(new_size, false)?;
+    account.resize(new_size)?;
     let event = ExtendAccountEvent {
         account: account.key(),
         user: ctx.accounts.user.key(),
@@ -119,7 +119,7 @@ pub fn prepare_bonding_curve<'info>(
     let needs_realloc = current_size < 166;
     let new_size = current_size.max(166);
     fund_bonding_curve_rent(curve, system_program, payer, new_size)?;
-    if needs_realloc { curve.to_account_info().realloc(166, false)?; }
+    if needs_realloc { curve.to_account_info().resize(166)?; }
     Ok(())
 }
 
