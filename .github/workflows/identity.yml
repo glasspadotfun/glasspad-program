@@ -1,0 +1,77 @@
+name: identity build + score
+# builds the curve program the way the public reconstruction builds pump (platform-tools v1.44,
+# the reconstruction's own fastbuild recipe) and scores it function by function against pump's
+# deployed binary with the reconstruction's scorer. two refs: the untouched import and main.
+# the score is the diff page's data: how many of the original's 1,035 functions are still byte-identical.
+on:
+  workflow_dispatch:
+  push:
+    branches: [main]
+    paths: ['programs/**', '.github/workflows/identity.yml']
+permissions:
+  contents: read
+jobs:
+  score:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 90
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - name: import
+            ref: 663f343e5f75bb0ecf6b59c78ce3f078cf7e5f3d
+          - name: main
+            ref: ${{ github.sha }}
+    env:
+      CARGO_REGISTRIES_CRATES_IO_PROTOCOL: sparse
+      SDK: /home/runner/.cache/solana/v1.44/platform-tools
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ matrix.ref }}
+          path: program
+          persist-credentials: false
+      - name: reconstruction tooling (pinned)
+        uses: actions/checkout@v4
+        with:
+          repository: lalalune/pumpfun-source
+          ref: 2abb99c
+          path: tooling
+          persist-credentials: false
+          sparse-checkout: |
+            reconstruction
+            evidence/original/pump
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: platform-tools v1.44 (linux x86_64)
+        run: |
+          curl --fail --location --retry 3 https://github.com/anza-xyz/platform-tools/releases/download/v1.44/platform-tools-linux-x86_64.tar.bz2 -o "$RUNNER_TEMP/sdk.tar.bz2"
+          sha256sum "$RUNNER_TEMP/sdk.tar.bz2"
+          mkdir -p "$SDK" && tar -xjf "$RUNNER_TEMP/sdk.tar.bz2" -C "$SDK"
+          head -3 "$SDK/version.md"
+          python3 -B tooling/reconstruction/toolchain/bootstrap.py --sdk-check full
+      - name: fetch locked dependencies with the sdk cargo
+        run: |
+          export RUSTC="$HOME/.cache/pumpfun-reconstruction/toolchains/hybrid144/rust/bin/rustc"
+          export CARGO_HOME="$HOME/.cargo"
+          "$SDK/rust/bin/cargo" fetch --locked --manifest-path program/programs/curve/Cargo.toml
+      - name: identity build
+        run: |
+          python3 -B tooling/reconstruction/harness/fastbuild.py --src program/programs/curve --work "$RUNNER_TEMP/work" --out "$RUNNER_TEMP/out" | tee "$RUNNER_TEMP/fastbuild.json"
+          ls -la "$RUNNER_TEMP/out"
+      - name: score against pump's deployed program
+        run: |
+          python3 -B tooling/reconstruction/harness/score.py "$RUNNER_TEMP/out/unstripped.so" --no-baseline --json "$RUNNER_TEMP/out/score.json"
+          sha256sum "$RUNNER_TEMP/out/"*.so
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: identity-${{ matrix.name }}
+          path: |
+            ${{ runner.temp }}/out/unstripped.so
+            ${{ runner.temp }}/out/candidate.so
+            ${{ runner.temp }}/out/score.json
+            ${{ runner.temp }}/out/build.log
+            ${{ runner.temp }}/fastbuild.json
+          if-no-files-found: warn
