@@ -13,7 +13,7 @@ const { AnchorProvider, Program, Wallet, BN } = anchorPkg;
 const cluster = process.argv[2] || 'devnet';
 const resumeMint = process.argv[3] ? new PublicKey(process.argv[3]) : null; // skip create/trade, graduate an existing complete coin
 const here = path.dirname(new URL(import.meta.url).pathname);
-const idl = JSON.parse(fs.readFileSync(process.env.IDL_PATH || path.join(here, '..', 'program', 'out', 'glasspad_curve.json'), 'utf8'));
+const idl = JSON.parse(fs.readFileSync(path.join(here, '..', 'program', 'out', 'glasspad_curve.json'), 'utf8'));
 const deployer = Keypair.fromSecretKey(Uint8Array.from(JSON.parse(fs.readFileSync(path.join(os.homedir(), '.config/glasspad/deployer.json'), 'utf8'))));
 
 const RPC = process.env.RPC_URL || (cluster === 'devnet' ? 'https://api.devnet.solana.com' : 'https://api.mainnet-beta.solana.com');
@@ -108,14 +108,20 @@ async function main() {
     const sealed = (await program.account.global.fetch(global)).platformCoin;
     if (sealed.equals(PublicKey.default)) await send('seal_platform_coin', program.methods.sealPlatformCoin().accounts({ global, team: deployer.publicKey, platformCoin: mint.publicKey }));
     else note('seal_platform_coin', null, `already sealed to ${sealed}`);
+    // the crank always runs against the sealed platform coin and its pool, whichever coin this run created
+    const coin = sealed.equals(PublicKey.default) ? mint.publicKey : sealed;
+    const [p0, p1] = [coin, NATIVE_MINT].sort((a, b) => a.toBuffer().compare(b.toBuffer()));
+    const coinPool = pda([Buffer.from('pool'), CPMM.config.toBuffer(), p0.toBuffer(), p1.toBuffer()], CPMM.program);
+    const coinVault = (m) => pda([Buffer.from('pool_vault'), coinPool.toBuffer(), m.toBuffer()], CPMM.program);
+    const coinObservation = pda([Buffer.from('observation'), coinPool.toBuffer()], CPMM.program);
     const before = await connection.getBalance(burnPda);
     await send('burn_crank', program.methods.burnCrank().accounts({
-      global, user: deployer.publicKey, burnPda, platformCoin: mint.publicKey, wsolMint: NATIVE_MINT,
-      burnWsolAccount: getAssociatedTokenAddressSync(NATIVE_MINT, burnPda, true), burnCoinAccount: getAssociatedTokenAddressSync(mint.publicKey, burnPda, true),
-      cpmmProgram: CPMM.program, ammConfig: CPMM.config, cpmmAuthority, token0Mint: t0, token1Mint: t1, poolState, token0Vault: vault(t0), token1Vault: vault(t1), observationState: observation,
+      global, user: deployer.publicKey, burnPda, platformCoin: coin, wsolMint: NATIVE_MINT,
+      burnWsolAccount: getAssociatedTokenAddressSync(NATIVE_MINT, burnPda, true), burnCoinAccount: getAssociatedTokenAddressSync(coin, burnPda, true),
+      cpmmProgram: CPMM.program, ammConfig: CPMM.config, cpmmAuthority, token0Mint: p0, token1Mint: p1, poolState: coinPool, token0Vault: coinVault(p0), token1Vault: coinVault(p1), observationState: coinObservation,
       tokenProgram: TOKEN_PROGRAM_ID, associatedTokenProgram: ASSOCIATED_TOKEN_PROGRAM_ID, systemProgram: SystemProgram.programId, eventAuthority, program: PID,
     }));
-    note('burn', null, `burn pda ${cu(before)} → ${cu(await connection.getBalance(burnPda))} sol`);
+    note('burn', null, `platform coin ${coin}, burn pda ${cu(before)} → ${cu(await connection.getBalance(burnPda))} sol`);
   }
   // 6. creator fee claim
   await send('collect_creator_fee', program.methods.collectCreatorFee().accounts({ creator: deployer.publicKey, creatorVault, systemProgram: SystemProgram.programId, eventAuthority, program: PID }));
@@ -124,4 +130,5 @@ async function main() {
 
 main().catch((e) => { note('FAILED', null, String(e?.message || e)); if (e?.logs) console.log(e.logs.join('\n')); process.exitCode = 1; }).finally(() => {
   fs.appendFileSync(path.join(here, 'RUN.md'), `\n## ${cluster} ${new Date().toISOString()}\n${log.join('\n')}\n`);
+  setTimeout(() => process.exit(), 500); // the rpc websocket keeps node alive otherwise
 });

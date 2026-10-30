@@ -176,3 +176,42 @@ Catch the `SendTransactionError` and call `getLogs()` on it for full details.
 - burn:  burn pda 0.015839887 → 0.01148844 sol
 - collect_creator_fee: [`8XFVHyAkecFo75TRo5CHf4bKgy8VSBJSDyFiJKaAZbT2mfYAMu9DpwVGAfqp9iD8mN52BCYgAsvUCs1XorCpt46`](https://solscan.io/tx/8XFVHyAkecFo75TRo5CHf4bKgy8VSBJSDyFiJKaAZbT2mfYAMu9DpwVGAfqp9iD8mN52BCYgAsvUCs1XorCpt46?cluster=devnet)
 - done:  deployer 6.524468355 sol
+
+## devnet 2026-10-30T13:18:00.665Z
+- canary on devnet:  program DpB6AVXBToz1wqYURvpttSThxcFHyzWe71F1Ufg1escH, deployer 6TrrMJAHMriYKHAak9xwL2TqCLWLW7kJwM2A7ackmqfy, 2026-10-30T13:17:55.032Z
+- deployer balance:  6.521138355 sol
+- initialize:  global already exists, skipped
+- global:  fee 100 bps, creator 40 bps, buyback 5000 bps, migration fee 0.2 sol, team 6TrrMJAHMriYKHAak9xwL2TqCLWLW7kJwM2A7ackmqfy, burn 2P5zbfTUDNsaqCKaPZjLmUo5ezkHpPANqiRhHDioySdw
+- create: [`3S6R53wwzRvs6PHNj81wFdiWRg1mW8S9zs22JSL4UdMBuWgvaRe1VwZ4a4Sm9TTHHAjSe5xiUPQedkdKNB6uddJV`](https://solscan.io/tx/3S6R53wwzRvs6PHNj81wFdiWRg1mW8S9zs22JSL4UdMBuWgvaRe1VwZ4a4Sm9TTHHAjSe5xiUPQedkdKNB6uddJV?cluster=devnet)
+- mint:  FHhadx2gYZhszR3VAWyrzjseWnqE1TzcWfazqLDWBYbM
+- buy 0.2 sol: [`2A9Hc8wRdJSwyPqUvxzRWBqja5Cu8aJmR9MdtgC7Fd8y8KhMxJS6gPiA5gQvVDPBdxQrYSXB1KGk34TaHdLGam4v`](https://solscan.io/tx/2A9Hc8wRdJSwyPqUvxzRWBqja5Cu8aJmR9MdtgC7Fd8y8KhMxJS6gPiA5gQvVDPBdxQrYSXB1KGk34TaHdLGam4v?cluster=devnet)
+- curve after buy:  real sol 0.197238658, real tokens 367475250231199
+- sell half: [`5jwjRQyyQyKAVr7futML7QVMMMYAXqhagwJbQ6xquKD6LcCtw8ntvkHmNapZcu5aaNfPm9VHijBm7einjddGPi2q`](https://solscan.io/tx/5jwjRQyyQyKAVr7futML7QVMMMYAXqhagwJbQ6xquKD6LcCtw8ntvkHmNapZcu5aaNfPm9VHijBm7einjddGPi2q?cluster=devnet)
+- curve after sell:  real sol 0.074220684
+- buy to complete #1: [`5A72MdUEj8M8jia5LMk1Bo3w8FXfSfDjLgC9xs4Zc15eZ4PPJYAwYSKqNd1JDKFuSMWFvCi2GAjW7JiQh7PkUCrv`](https://solscan.io/tx/5A72MdUEj8M8jia5LMk1Bo3w8FXfSfDjLgC9xs4Zc15eZ4PPJYAwYSKqNd1JDKFuSMWFvCi2GAjW7JiQh7PkUCrv?cluster=devnet)
+- buy to complete #2: [`2wcd7RTCHrBgyPdQpAj93ebKhdrwpi3HfN1ikepotVR6GseVtoJV5yRcbqDPdaF3s15dJPyLZc3cfu7oseVVhajU`](https://solscan.io/tx/2wcd7RTCHrBgyPdQpAj93ebKhdrwpi3HfN1ikepotVR6GseVtoJV5yRcbqDPdaF3s15dJPyLZc3cfu7oseVVhajU?cluster=devnet)
+- curve complete:  true, real sol 0.850053598, team 5.64191895 sol, burn pda 0.016968887 sol
+- migrate: [`2hHvvrJK4nvAVWxtNjbeDp7mhtWNSvrxjkWiHaB93AseZyCStHH5n1uysjMShuRLjP7rEkHAKnHP2X4Ets2tkjWA`](https://solscan.io/tx/2hHvvrJK4nvAVWxtNjbeDp7mhtWNSvrxjkWiHaB93AseZyCStHH5n1uysjMShuRLjP7rEkHAKnHP2X4Ets2tkjWA?cluster=devnet)
+- pool:  7vNMWZeybnmhAD6xa3MkxRxMtgXtMbL2cGexEvswuxj5 (lp mint Ecm8yhjue17Gxszj7BMz7ZWZmbfy8bZiAg1YZzkNnDBY), team 5.65227339 sol, burn pda 0.027328327 sol
+- seal_platform_coin:  already sealed to 23enffH6dZ5MnGAJCebMozdyBjNh1RYYiSN7LAn1QKmC
+- FAILED:  AnchorError caused by account: platform_coin. Error Code: ConstraintAddress. Error Number: 2012. Error Message: An address constraint was violated.
+Program log: Left:
+Program log: FHhadx2gYZhszR3VAWyrzjseWnqE1TzcWfazqLDWBYbM
+Program log: Right:
+Program log: 23enffH6dZ5MnGAJCebMozdyBjNh1RYYiSN7LAn1QKmC
+
+## devnet 2026-10-30T13:27:08.107Z
+- canary on devnet:  program DpB6AVXBToz1wqYURvpttSThxcFHyzWe71F1Ufg1escH, deployer 6TrrMJAHMriYKHAak9xwL2TqCLWLW7kJwM2A7ackmqfy, 2026-10-30T13:27:05.738Z
+- deployer balance:  5.65227339 sol
+- initialize:  global already exists, skipped
+- global:  fee 100 bps, creator 40 bps, buyback 5000 bps, migration fee 0.2 sol, team 6TrrMJAHMriYKHAak9xwL2TqCLWLW7kJwM2A7ackmqfy, burn 2P5zbfTUDNsaqCKaPZjLmUo5ezkHpPANqiRhHDioySdw
+- mint:  FHhadx2gYZhszR3VAWyrzjseWnqE1TzcWfazqLDWBYbM
+- curve after sell:  real sol 0
+- curve complete:  true, real sol 0, team 5.65227339 sol, burn pda 0.027328327 sol
+- migrate:  pool already exists, skipped
+- pool:  7vNMWZeybnmhAD6xa3MkxRxMtgXtMbL2cGexEvswuxj5 (lp mint Ecm8yhjue17Gxszj7BMz7ZWZmbfy8bZiAg1YZzkNnDBY), team 5.65227339 sol, burn pda 0.027328327 sol
+- seal_platform_coin:  already sealed to 23enffH6dZ5MnGAJCebMozdyBjNh1RYYiSN7LAn1QKmC
+- burn_crank: [`3rHho5ejpbe7BAXjccSF81RSxmVeNoPRUJ5vQx4gP4gE8psqpaAYvdjibD5ZZMk7iTtMYydXwokNn687Ss9ghLjb`](https://solscan.io/tx/3rHho5ejpbe7BAXjccSF81RSxmVeNoPRUJ5vQx4gP4gE8psqpaAYvdjibD5ZZMk7iTtMYydXwokNn687Ss9ghLjb?cluster=devnet)
+- burn:  platform coin 23enffH6dZ5MnGAJCebMozdyBjNh1RYYiSN7LAn1QKmC, burn pda 0.027328327 → 0.01148844 sol
+- collect_creator_fee: [`3FxN8HSLKrzAfhj4M5cjjDYi7ANNFzJmsKY7h5rCGAoFTttMZE6prc289BkQUAEDWvyzs9WNSG15QFJweGRdC5hk`](https://solscan.io/tx/3FxN8HSLKrzAfhj4M5cjjDYi7ANNFzJmsKY7h5rCGAoFTttMZE6prc289BkQUAEDWvyzs9WNSG15QFJweGRdC5hk?cluster=devnet)
+- done:  deployer 5.65664775 sol
