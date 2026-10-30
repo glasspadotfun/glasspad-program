@@ -1,0 +1,14 @@
+{
+  "name": "glasspad-canary",
+  "private": true,
+  "type": "module",
+  "description": "end-to-end run of the glasspad curve program: initialize, create, buy, sell, graduate, seal, burn crank. every signature is written to RUN.md.",
+  "scripts": {
+    "devnet": "node canary.mjs devnet"
+  },
+  "dependencies": {
+    "@coral-xyz/anchor": "^0.31.1",
+    "@solana/spl-token": "^0.4.13",
+    "@solana/web3.js": "^1.98.0"
+  }
+}
