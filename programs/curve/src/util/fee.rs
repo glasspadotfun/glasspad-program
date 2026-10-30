@@ -34,75 +34,11 @@ pub fn fee(quote_amount: u64, basis_points: u64) -> Result<u64> {
     u64::try_from(value).map_err(|_| error!(crate::PumpError::Truncation))
 }
 
-use crate::{trade_types::{BondingCurve,FeeTier},pump_fees::accounts::FeeConfig};
-const WSOL_QUOTE:Pubkey=anchor_spl::token::spl_token::native_mint::ID;
-const QUOTE_2:Pubkey=Pubkey::new_from_array([131,13,252,159,222,95,230,184,170,124,4,164,118,233,30,138,198,187,38,74,173,144,250,25,201,223,73,216,92,62,91,94]);
-const USDC:Pubkey=anchor_lang::solana_program::pubkey!("EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v");
-// layout-pad: aligns the next Source site with the original line
-/// Shared fee query and accounting. Account clones are created here before
-/// the fallible market-cap calculation, as in the original outer helper.
+use crate::trade_types::BondingCurve;
+
 /// the only fee rule: two constants, creator fee only when the coin has a creator.
 pub fn fees_for(curve: &BondingCurve, quote_amount: u64) -> Result<(u64, u64, u64, u64)> {
     let protocol_fee = fee(quote_amount, crate::consts::PROTOCOL_FEE_BPS)?;
     let creator_fee = if curve.creator != Pubkey::default() { fee(quote_amount, crate::consts::CREATOR_FEE_BPS)? } else { 0 };
     Ok((protocol_fee, creator_fee, crate::consts::PROTOCOL_FEE_BPS, crate::consts::CREATOR_FEE_BPS))
 }
-pub fn trade_fees<'info>(
-    _global: &Account<'info, crate::Global>,
-    curve: &Account<'info, BondingCurve>,
-    _mint: &InterfaceAccount<'info, anchor_spl::token_interface::Mint>,
-    _fee_config: &Account<'info, crate::legacy_sell::LegacyFeeConfig>,
-    _fee_program: &Program<'info, crate::legacy_sell::LegacyFeesProgram>,
-    _program: &AccountInfo<'info>,
-    quote_amount: u64,
-) -> Result<(u64, u64, u64, u64)> {
-    // no fee program, no tiers, no market-cap lookup: two constants.
-    let protocol_fee = fee(quote_amount, crate::consts::PROTOCOL_FEE_BPS)?;
-    let creator_fee = if curve.creator != Pubkey::default() { fee(quote_amount, crate::consts::CREATOR_FEE_BPS)? } else { 0 };
-    Ok((protocol_fee, creator_fee, crate::consts::PROTOCOL_FEE_BPS, crate::consts::CREATOR_FEE_BPS))
-}
-pub fn calculate_fee_tier(fee_tiers: &[FeeTier], market_cap: u128) -> Result<(u64, u64)> {
-    // fee tiers must be non-empty
-    require!(!fee_tiers.is_empty(), crate::PumpError::FeeTiersEmpty);
-    let first_tier = &fee_tiers[0];
-    if market_cap < first_tier.market_cap_lamports_threshold {
-        return Ok((first_tier.fees.protocol_fee_bps, first_tier.fees.creator_fee_bps));
-    }
-    let tier = fee_tiers.iter().rev().find(|tier| market_cap >= tier.market_cap_lamports_threshold).unwrap_or(first_tier);
-    Ok((tier.fees.protocol_fee_bps, tier.fees.creator_fee_bps))
-}
-
-
-
-
-
-
-
-
-
-
-
-fn is_sol_quote(quote_mint: &Pubkey) -> bool { *quote_mint == Pubkey::default() || *quote_mint == WSOL_QUOTE || *quote_mint == QUOTE_2 }
-fn get_fee_basis_points(fee_config: &FeeConfig, fee_config_len: usize, quote_mint: &Pubkey, market_cap: u128) -> Result<(u64, u64)> {
-    require!(fee_config_len >= 2512, crate::PumpError::FeeConfigTooShort);
-    if is_sol_quote(quote_mint) {
-        calculate_fee_tier(&fee_config.fee_tiers, market_cap)
-    } else if USDC == *quote_mint {
-        calculate_fee_tier(if fee_config_len > 4072 { &fee_config.stable_fee_tiers } else { &[] }, market_cap)
-    } else {
-            let exotic = &fee_config.exotic_flat_fees;
-            let use_exotic = fee_config_len > 4096 && (exotic.lp_fee_bps != 0 || exotic.protocol_fee_bps != 0 || exotic.creator_fee_bps != 0);
-            let fees = if use_exotic { exotic } else { &fee_config.flat_fees }; Ok((fees.protocol_fee_bps, fees.creator_fee_bps))
-    }
-}
-#[derive(Clone, Copy, Default)] pub struct TradeFees { pub protocol_fee: u64, pub creator_fee: u64, pub protocol_fee_bps: u64, pub creator_fee_bps: u64 }
-pub fn get_fees(global: &crate::Global, bonding_curve: &BondingCurve, fee_config: &FeeConfig, fee_config_len: usize, market_cap: u128, amount: u64) -> Result<TradeFees> {
-    let (protocol_fee_bps, creator_fee_bps) = get_fee_basis_points(fee_config, fee_config_len, &bonding_curve.quote_mint, market_cap)?;
-    let creator_fee_bps = if global.creator_fee_configurable && bonding_curve.creator_fee_bps != 0 { bonding_curve.creator_fee_bps } else { creator_fee_bps };
-    let protocol_fee = fee(amount, protocol_fee_bps)?;
-    let creator_fee = if bonding_curve.creator != Pubkey::default() { fee(amount, creator_fee_bps)? } else { 0 };
-    Ok(TradeFees { protocol_fee, creator_fee, protocol_fee_bps, creator_fee_bps })
-}
-
-
-
