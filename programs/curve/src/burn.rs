@@ -49,7 +49,8 @@ pub struct BurnCrank<'info> {
     /// CHECK: holds the burn half of every fee.
     #[account(mut, seeds = [crate::consts::BURN_SEED], bump)]
     pub burn_pda: UncheckedAccount<'info>,
-    #[account(address = global.platform_coin)]
+    /// burning changes the supply, so the mint is writable.
+    #[account(mut, address = global.platform_coin)]
     pub platform_coin: Box<InterfaceAccount<'info, Mint>>,
     #[account(address = anchor_spl::token::spl_token::native_mint::ID)]
     pub wsol_mint: Box<InterfaceAccount<'info, Mint>>,

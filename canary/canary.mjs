@@ -11,6 +11,7 @@ import { TOKEN_PROGRAM_ID, ASSOCIATED_TOKEN_PROGRAM_ID, NATIVE_MINT, getAssociat
 
 const { AnchorProvider, Program, Wallet, BN } = anchorPkg;
 const cluster = process.argv[2] || 'devnet';
+const resumeMint = process.argv[3] ? new PublicKey(process.argv[3]) : null; // skip create/trade, graduate an existing complete coin
 const here = path.dirname(new URL(import.meta.url).pathname);
 const idl = JSON.parse(fs.readFileSync(process.env.IDL_PATH || path.join(here, '..', 'program', 'out', 'glasspad_curve.json'), 'utf8'));
 const deployer = Keypair.fromSecretKey(Uint8Array.from(JSON.parse(fs.readFileSync(path.join(os.homedir(), '.config/glasspad/deployer.json'), 'utf8'))));
@@ -52,12 +53,12 @@ async function main() {
   note('global', null, `fee ${g.feeBasisPoints} bps, creator ${g.creatorFeeBasisPoints} bps, buyback ${g.buybackBasisPoints} bps, migration fee ${cu(g.poolMigrationFee)} sol, team ${g.feeRecipient}, burn ${g.buybackFeeRecipients[0]}`);
 
   // 2. create
-  const mint = Keypair.generate();
+  const mint = resumeMint ? { publicKey: resumeMint } : Keypair.generate();
   const bondingCurve = pda([Buffer.from('bonding-curve'), mint.publicKey.toBuffer()]);
   const bondingCurveV2 = pda([Buffer.from('bonding-curve-v2'), mint.publicKey.toBuffer()]);
   const associatedBondingCurve = getAssociatedTokenAddressSync(mint.publicKey, bondingCurve, true);
   const metadata = PublicKey.findProgramAddressSync([Buffer.from('metadata'), MPL.toBuffer(), mint.publicKey.toBuffer()], MPL)[0];
-  await send('create', program.methods.create('glasspad canary', 'CANARY', 'https://glasspad.fun/canary.json', deployer.publicKey).accounts({
+  if (!resumeMint) await send('create', program.methods.create('glasspad canary', 'CANARY', 'https://glasspad.fun/canary.json', deployer.publicKey).accounts({
     mint: mint.publicKey, mintAuthority: pda([Buffer.from('mint-authority')]), bondingCurve, associatedBondingCurve, global,
     mplTokenMetadata: MPL, metadata, user: deployer.publicKey, systemProgram: SystemProgram.programId, tokenProgram: TOKEN_PROGRAM_ID,
     associatedTokenProgram: ASSOCIATED_TOKEN_PROGRAM_ID, rent: SYSVAR_RENT_PUBKEY, eventAuthority, program: PID,
@@ -72,13 +73,13 @@ async function main() {
   const ataIx = createAssociatedTokenAccountIdempotentInstruction(deployer.publicKey, associatedUser, deployer.publicKey, mint.publicKey);
   const curve = async () => program.account.bondingCurve.fetch(bondingCurve);
 
-  await send('buy 0.2 sol', program.methods.buyExactSolIn(new BN(0.2 * LAMPORTS_PER_SOL), new BN(0), [false], [true]).accounts(tradeAccounts).remainingAccounts(remaining).preInstructions([ataIx]));
-  let c = await curve(); note('curve after buy', null, `real sol ${cu(c.realQuoteReserves)}, real tokens ${c.realTokenReserves.toString()}`);
+  if (!resumeMint) await send('buy 0.2 sol', program.methods.buyExactSolIn(new BN(0.2 * LAMPORTS_PER_SOL), new BN(1), [false], [true]).accounts(tradeAccounts).remainingAccounts(remaining).preInstructions([ataIx]));
+  let c = await curve(); if (!resumeMint) note('curve after buy', null, `real sol ${cu(c.realQuoteReserves)}, real tokens ${c.realTokenReserves.toString()}`);
   const held = (await getAccount(connection, associatedUser)).amount;
-  await send('sell half', program.methods.sell(new BN((held / 2n).toString()), new BN(0)).accounts(tradeAccounts).remainingAccounts(remaining));
+  if (!resumeMint) await send('sell half', program.methods.sell(new BN((held / 2n).toString()), new BN(0)).accounts(tradeAccounts).remainingAccounts(remaining));
   c = await curve(); note('curve after sell', null, `real sol ${cu(c.realQuoteReserves)}`);
   for (let i = 0; i < 6 && !(await curve()).complete; i++) {
-    await send(`buy to complete #${i + 1}`, program.methods.buyExactSolIn(new BN(0.5 * LAMPORTS_PER_SOL), new BN(0), [false], [true]).accounts(tradeAccounts).remainingAccounts(remaining));
+    await send(`buy to complete #${i + 1}`, program.methods.buyExactSolIn(new BN(0.5 * LAMPORTS_PER_SOL), new BN(1), [false], [true]).accounts(tradeAccounts).remainingAccounts(remaining));
   }
   c = await curve(); note('curve complete', null, `${c.complete}, real sol ${cu(c.realQuoteReserves)}, team ${cu(await connection.getBalance(TEAM))} sol, burn pda ${cu(await connection.getBalance(burnPda))} sol`);
   if (!c.complete) throw new Error('curve did not complete');
@@ -91,7 +92,7 @@ async function main() {
   const lpMint = pda([Buffer.from('pool_lp_mint'), poolState.toBuffer()], CPMM.program);
   const vault = (m) => pda([Buffer.from('pool_vault'), poolState.toBuffer(), m.toBuffer()], CPMM.program);
   const observation = pda([Buffer.from('observation'), poolState.toBuffer()], CPMM.program);
-  await send('migrate', program.methods.migrate().accounts({
+  if (await connection.getAccountInfo(poolState)) note('migrate', null, 'pool already exists, skipped'); else await send('migrate', program.methods.migrate().accounts({
     global, mint: mint.publicKey, bondingCurve, associatedBondingCurve, user: deployer.publicKey, poolAuthority,
     poolAuthorityMintAccount: getAssociatedTokenAddressSync(mint.publicKey, poolAuthority, true),
     poolAuthorityWsolAccount: getAssociatedTokenAddressSync(NATIVE_MINT, poolAuthority, true),
@@ -104,7 +105,9 @@ async function main() {
 
   // 5. seal + burn crank (the canary coin plays the platform coin on devnet)
   if (cluster === 'devnet') {
-    await send('seal_platform_coin', program.methods.sealPlatformCoin().accounts({ global, team: deployer.publicKey, platformCoin: mint.publicKey }));
+    const sealed = (await program.account.global.fetch(global)).platformCoin;
+    if (sealed.equals(PublicKey.default)) await send('seal_platform_coin', program.methods.sealPlatformCoin().accounts({ global, team: deployer.publicKey, platformCoin: mint.publicKey }));
+    else note('seal_platform_coin', null, `already sealed to ${sealed}`);
     const before = await connection.getBalance(burnPda);
     await send('burn_crank', program.methods.burnCrank().accounts({
       global, user: deployer.publicKey, burnPda, platformCoin: mint.publicKey, wsolMint: NATIVE_MINT,
