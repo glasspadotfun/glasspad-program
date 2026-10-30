@@ -35,7 +35,7 @@ jobs:
         uses: actions/checkout@v4
         with:
           repository: lalalune/pumpfun-source
-          ref: 2abb99c
+          ref: 2abb99ccb60766c3cd292e679dbac5314afb3f3b
           path: tooling
           persist-credentials: false
           sparse-checkout: |
