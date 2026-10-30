@@ -41,6 +41,12 @@ const USDC:Pubkey=anchor_lang::solana_program::pubkey!("EPjFWdd5AufqSSqeM2qN1xzy
 // layout-pad: aligns the next Source site with the original line
 /// Shared fee query and accounting. Account clones are created here before
 /// the fallible market-cap calculation, as in the original outer helper.
+/// the only fee rule: two constants, creator fee only when the coin has a creator.
+pub fn fees_for(curve: &BondingCurve, quote_amount: u64) -> Result<(u64, u64, u64, u64)> {
+    let protocol_fee = fee(quote_amount, crate::consts::PROTOCOL_FEE_BPS)?;
+    let creator_fee = if curve.creator != Pubkey::default() { fee(quote_amount, crate::consts::CREATOR_FEE_BPS)? } else { 0 };
+    Ok((protocol_fee, creator_fee, crate::consts::PROTOCOL_FEE_BPS, crate::consts::CREATOR_FEE_BPS))
+}
 pub fn trade_fees<'info>(
     _global: &Account<'info, crate::Global>,
     curve: &Account<'info, BondingCurve>,

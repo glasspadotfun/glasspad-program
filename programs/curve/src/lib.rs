@@ -178,16 +178,6 @@ pub mod pump_recovered {
 // layout-pad
 // layout-pad
 // layout-pad
-    pub fn create_v2<'info>(ctx:Context<'_,'_,'_,'info,CreateV2<'info>>,name:String,symbol:String,uri:String,creator:Pubkey,is_mayhem_mode:bool,is_cashback_enabled:OptionBool,creator_fee_bps:CreationOptionU64,is_holder_reward:OptionBool)->Result<()>{create_v2::execute(ctx,name,symbol,uri,creator,is_mayhem_mode,is_cashback_enabled,creator_fee_bps,is_holder_reward)}
-    #[inline(never)] pub fn buy_v2<'info>(ctx:Context<'_,'_,'_,'info,BuyV2<'info>>,amount:u64,max_sol_cost:u64,partial_fill:OptionBool)->Result<()>{buy_v2::execute(ctx,amount,max_sol_cost,partial_fill.0,false)}
-    #[inline(never)] pub fn buy_exact_quote_in_v2<'info>(ctx:Context<'_,'_,'_,'info,BuyV2<'info>>,spendable_quote_in:u64,min_tokens_out:u64,partial_fill:OptionBool)->Result<()>{buy_v2::execute(ctx,spendable_quote_in,min_tokens_out,partial_fill.0,true)}
-    #[inline(never)]pub fn sell_v2(ctx:Context<SellV2>,amount:u64,min_sol_output:u64)->Result<()>{sell_v2::execute(ctx,amount,min_sol_output)}
-    #[inline(never)]pub fn buy_v3(ctx: Context<SellV3>, amount:u64,max_sol_cost:u64,partial_fill:OptionBool)->Result<()>{trade::buy(ctx,amount,max_sol_cost,partial_fill.0)}
-    #[inline(never)]pub fn buy_exact_quote_in_v3(ctx:Context<SellV3>,spendable_quote_in:u64,min_tokens_out:u64,partial_fill:OptionBool)->Result<()>{trade::buy_exact_quote(ctx,spendable_quote_in,min_tokens_out,partial_fill.0)}
-    #[inline(never)]pub fn sell_v3(ctx: Context<SellV3>, amount: u64, min_sol_output: u64) -> Result<()> { trade::sell(ctx, amount, min_sol_output) }
-    pub fn multi_hop_curve_swap<'info>(ctx:Context<'_,'_,'info,'info,MultiHopCurve<'info>>,amount_in:u64,hop_fees:Vec<u8>)->Result<CurveRunResult>{multi_hop_curve::execute(ctx,amount_in,hop_fees)}
-    pub fn sweep_protocol_fee(ctx:Context<SweepFees>)->Result<()>{sweep::execute(ctx,false)}
-    pub fn sweep_creator_fee(ctx:Context<SweepFees>)->Result<()>{sweep::execute(ctx,true)}
     pub fn buy<'info>(ctx:Context<'_,'_,'_,'info,LegacyBuy<'info>>,amount:u64,max_sol_cost:u64,track_volume:OptionBool,partial_fill:OptionBool)->Result<()>{
      let fee_recipient=&ctx.accounts.fee_recipient;
      let bonding_curve=&mut ctx.accounts.bonding_curve;let (associated_bonding_curve,associated_user,token_program)=(&ctx.accounts.associated_bonding_curve,&ctx.accounts.associated_user,&ctx.accounts.token_program);
@@ -458,9 +448,7 @@ pub mod pump_recovered {
 
 
      let sol_cost=u64::try_from(crate::legacy_sell::fee_cpi::buy_quote(bonding_curve,amount)?).map_err(|_|error!(PumpError::Truncation))?;
-     let (protocol_fee,creator_fee,protocol_fee_bps,creator_fee_bps)={let fees=crate::legacy_sell::fee_cpi::trade_fees(
-      &ctx.accounts.global,bonding_curve,&ctx.accounts.mint,&ctx.accounts.fee_config,&ctx.accounts.fee_program,ctx.accounts.program.as_ref(),sol_cost
-     )?;if ctx.accounts.global.whitelist_pda==ctx.accounts.user.key(){(0,0,0,0)}else{fees}};
+     let (protocol_fee,creator_fee,protocol_fee_bps,creator_fee_bps)=crate::fee_math::fees_for(bonding_curve,sol_cost)?;
 // layout-pad: aligns the next Source site with the original lib.rs line
 
 
@@ -544,7 +532,6 @@ pub mod pump_recovered {
 
 
 
-     if ctx.accounts.user_volume_accumulator.user==Pubkey::default(){ctx.accounts.user_volume_accumulator.user=ctx.accounts.user.key();}
 // layout-pad: aligns the next Source site with the original lib.rs line
 
 
@@ -562,25 +549,8 @@ pub mod pump_recovered {
      let mut cashback=false;
      if creator_fee!=0{
       crate::legacy_sell::check_bonding_curve_v2(ctx.remaining_accounts,&mint.key())?;
-      if bonding_curve.is_cashback_coin{
-       #[inline(always)] fn pay_owned<'info>(to:AccountInfo<'info>,system_program:&AccountInfo<'info>,user:&Signer<'info>,amount:u64)->Result<()>{crate::user_quote_payments::transfer_native_owned(system_program,user,to,amount)}
-       pay_owned(ctx.accounts.user_volume_accumulator.to_account_info(),ctx.accounts.system_program.as_ref(),&ctx.accounts.user,creator_fee)?;
-// layout-pad: aligns the next Source site with the original lib.rs line
-
-
-
-
-
-
-
-
-
-       ctx.accounts.user_volume_accumulator.cashback_earned=ctx.accounts.user_volume_accumulator.cashback_earned.checked_add(creator_fee).ok_or(error!(PumpError::Overflow))?;
-       cashback=true;
-      }else{
        crate::legacy_buy::native_payments::ensure_rent_exempt(&ctx.accounts.system_program,&ctx.accounts.user,&ctx.accounts.creator_vault)?;
        crate::user_quote_payments::transfer_native_unchecked(ctx.accounts.system_program.as_ref(),&ctx.accounts.user,&ctx.accounts.creator_vault,creator_fee)?;
-      }
      }
      crate::user_quote_payments::transfer_native_curve(ctx.accounts.system_program.as_ref(),&ctx.accounts.user,&bonding_curve,sol_cost)?;
      let mut buyback_fee=0;
@@ -597,10 +567,10 @@ pub mod pump_recovered {
      let creator=bonding_curve.creator;
      let timestamp=Clock::get()?.unix_timestamp;
      let event=crate::trade_types::TradeEvent{
-      total_unclaimed_tokens:ctx.accounts.user_volume_accumulator.total_unclaimed_tokens,
-      total_claimed_tokens:ctx.accounts.user_volume_accumulator.total_claimed_tokens,
-      current_sol_volume:ctx.accounts.user_volume_accumulator.current_sol_volume,
-      last_update_timestamp:ctx.accounts.user_volume_accumulator.last_update_timestamp,
+      total_unclaimed_tokens:0,
+      total_claimed_tokens:0,
+      current_sol_volume:0,
+      last_update_timestamp:0,
       mint,
       sol_amount:sol_cost,
       token_amount:amount,
@@ -810,9 +780,7 @@ pub mod pump_recovered {
 
 
      let sol_output=u64::try_from(bonding_curve.sell_quote(amount)?).map_err(|_|error!(PumpError::Truncation))?;
-     let (protocol_fee,creator_fee,protocol_fee_bps,creator_fee_bps)={let fees=crate::legacy_sell::fee_cpi::trade_fees(
-      &ctx.accounts.global,bonding_curve,&ctx.accounts.mint,&ctx.accounts.fee_config,&ctx.accounts.fee_program,ctx.accounts.program.as_ref(),sol_output
-     )?;if ctx.accounts.global.whitelist_pda==ctx.accounts.user.key(){(0,0,0,0)}else{fees}};
+     let (protocol_fee,creator_fee,protocol_fee_bps,creator_fee_bps)=crate::fee_math::fees_for(bonding_curve,sol_output)?;
 // layout-pad: aligns the next Source site with the original lib.rs line
 
 
@@ -882,7 +850,6 @@ pub mod pump_recovered {
      emit!(event);emit_cpi!(event);Ok(())
     }
     pub fn migrate<'info>(ctx:Context<'_,'_,'_,'info,Migrate<'info>>)->Result<()>{migrate::execute(ctx)}
-    pub fn migrate_v2<'info>(ctx:Context<'_, '_, '_, 'info,MigrateV2<'info>>)->Result<()>{migrate_v2::execute(ctx)}
     pub fn extend_account(ctx:Context<ExtendAccount>)->Result<()>{extend::execute(ctx)}
     pub fn collect_creator_fee(ctx:Context<CollectCreatorFee>)->Result<()>{collect_v2::collect_creator_fee(ctx)
 
@@ -895,22 +862,10 @@ pub mod pump_recovered {
 
 
     }
-    pub fn collect_creator_fee_v2(ctx:Context<CollectCreatorFeeV2>)->Result<()>{collect_v2::execute(ctx)}
-    pub fn distribute_fee_to_holders<'info>(ctx:Context<'_, '_, '_, 'info,DistributeFeeToHolders<'info>>,amounts:Vec<u64>)->Result<()>{holder_distribution::execute(ctx,amounts)}
-    pub fn claim_token_incentives(ctx: Context<ClaimTokenIncentives>) -> Result<()> { token_incentives::claim(ctx) }
-    pub fn claim_cashback(ctx:Context<ClaimCashback>)->Result<()>{cashback::claim(ctx)}
-    pub fn claim_cashback_v2(ctx:Context<ClaimCashbackV2>)->Result<()>{cashback::claim_v2(ctx)}
-    pub fn init_user_volume_accumulator(ctx:Context<InitUserVolume>)->Result<()>{token_incentives::init_user_volume_accumulator::execute(ctx)}
 
 
-    pub fn close_user_volume_accumulator(ctx:Context<CloseUserVolume>)->Result<()>{token_incentives::close_user_volume_accumulator::execute(ctx)}
 
 
-    pub fn sync_user_volume_accumulator(ctx:Context<SyncUserVolumeAccumulator>)->Result<()>{volume_sync::execute(ctx)}
-    pub fn migrate_bonding_curve_creator(ctx:Context<MigrateBondingCurveCreator>)->Result<()>{creator_migration::execute(ctx)}
-    pub fn get_minimum_distributable_fee<'info>(ctx:Context<'_,'_,'_,'info,GetMinimumDistributableFee<'info>>)->Result<MinimumDistributableFeeEvent>{minimum::execute(ctx)}
-    pub fn distribute_creator_fees<'info>(ctx:Context<'_,'_,'_,'info,DistributeCreatorFees<'info>>)->Result<DistributeCreatorFeesEvent>{distribution::execute(ctx)}
-    pub fn distribute_creator_fees_v2<'info>(ctx:Context<'_,'_,'_,'info,DistributeCreatorFeesV2<'info>>,initialize_ata:bool)->Result<DistributeCreatorFeesEvent>{distribution::execute_v2(ctx,initialize_ata)}
 }
 
 #[error_code]
@@ -2698,20 +2653,13 @@ pub struct LegacyBuy<'info>{
  #[account(seeds=[b"__event_authority"],bump)]pub event_authority:AccountInfo<'info>,
  /// CHECK: self CPI.
  pub program:Program<'info,crate::program::PumpRecovered>,
- #[account(seeds=[b"global_volume_accumulator"],bump)]pub global_volume_accumulator:Box<Account<'info,crate::GlobalVolumeAccumulator>>,
- #[account(init_if_needed,payer=user,space=137,seeds=[b"user_volume_accumulator",user.key().as_ref()],bump)]pub user_volume_accumulator:Box<Account<'info,crate::UserVolumeAccumulator>>,
- /// CHECK: fee program validates config.
- #[account(seeds=[b"fee_config",crate::ID.as_ref()],bump,seeds::program=fee_program.key())]
- pub fee_config:Account<'info,legacy_sell::LegacyFeeConfig>,
- /// CHECK: canonical dependency.
- pub fee_program:Program<'info,legacy_sell::LegacyFeesProgram>,
 }
 
 #[derive(Accounts)]
 pub struct LegacySell<'info>{
  #[account(seeds=[b"global"],bump)]pub global:Box<Account<'info,Global>>,#[doc="CHECK: handler validates recipient."]#[account(mut)]pub fee_recipient:UncheckedAccount<'info>,pub mint:InterfaceAccount<'info,anchor_spl::token_interface::Mint>,#[account(mut,seeds=[b"bonding-curve",mint.key().as_ref()],bump,constraint=bonding_curve.quote_mint==Pubkey::default() @ PumpError::UnsupportedQuoteMint)]pub bonding_curve:Account<'info,trade_types::BondingCurve>,
  #[account(mut,associated_token::mint=mint,associated_token::authority=bonding_curve,associated_token::token_program=token_program)]pub associated_bonding_curve:InterfaceAccount<'info,anchor_spl::token_interface::TokenAccount>,#[account(mut,token::mint=mint)]pub associated_user:InterfaceAccount<'info,anchor_spl::token_interface::TokenAccount>,#[account(mut)]pub user:Signer<'info>,pub system_program:Program<'info,System>,#[doc="CHECK: PDA checked."]#[account(mut,seeds=[b"creator-vault",bonding_curve.creator.as_ref()],bump)]pub creator_vault:AccountInfo<'info>,pub token_program:Interface<'info,anchor_spl::token_interface::TokenInterface>,
- #[doc="CHECK: event authority."]#[account(seeds=[b"__event_authority"],bump)]pub event_authority:AccountInfo<'info>,#[doc="CHECK: self CPI."]pub program:Program<'info,crate::program::PumpRecovered>,#[doc="CHECK: fee program validates config."]#[account(seeds=[b"fee_config",crate::ID.as_ref()],bump,seeds::program=fee_program.key())]pub fee_config:Account<'info,legacy_sell::LegacyFeeConfig>,#[doc="CHECK: canonical dependency."]pub fee_program:Program<'info,legacy_sell::LegacyFeesProgram>,
+ #[doc="CHECK: event authority."]#[account(seeds=[b"__event_authority"],bump)]pub event_authority:AccountInfo<'info>,#[doc="CHECK: self CPI."]pub program:Program<'info,crate::program::PumpRecovered>,
 }}pub use bonding_curve_instruction_accounts::*;
 
 
