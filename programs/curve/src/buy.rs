@@ -1,6 +1,5 @@
 use anchor_lang::prelude::*;
 use crate::PumpError;
-use crate::trade_types::{BondingCurve,TradeEvent};
 use crate::LegacyBuy;
 use crate::legacy_sell::fee_cpi::fee as ceil_fee;
 pub use crate::legacy_native_payments as native_payments;
