@@ -361,22 +361,11 @@ pub use crate::extend::fund_bonding_curve_rent;
 
 
 pub use crate::TradeEvent;
-pub use crate::pump_fees::{
-
-    types::{FeeTier, Fees, Shareholder},
-};
+/// kept for the trade event layout. glasspad has no fee sharing, so the list is always empty.
+#[derive(AnchorSerialize, AnchorDeserialize, Clone)]
+pub struct Shareholder { pub address: Pubkey, pub share_bps: u16 }
 
 pub use crate::CompleteEvent;
 
 
 
-// Route decoding has its own Rust type; the external CPI account keeps the IDL type.
-#[derive(AnchorSerialize, AnchorDeserialize, Clone)]
-pub struct FeeConfig {
-    pub bump: u8,
-    pub admin: Pubkey,
-    pub flat_fees: Fees,
-    pub fee_tiers: Vec<FeeTier>,
-    pub stable_fee_tiers: Vec<FeeTier>,
-    pub exotic_flat_fees: Fees,
-}

@@ -1,6 +1,5 @@
 use anchor_lang::prelude::*;
-use anchor_spl::token_interface::{self,Mint,TokenAccount,TokenInterface,TransferChecked};
-use crate::{Global,PumpError};
+use crate::PumpError;
 use crate::trade_types::{BondingCurve,TradeEvent};
 use crate::LegacyBuy;
 use crate::legacy_sell::fee_cpi::fee as ceil_fee;
@@ -151,22 +150,15 @@ pub use crate::legacy_native_payments as native_payments;
  bonding_curve.virtual_quote_reserves=bonding_curve.virtual_quote_reserves.checked_add(quote).ok_or(PumpError::Overflow)?;
  bonding_curve.real_token_reserves-=amount;
  bonding_curve.real_quote_reserves=bonding_curve.real_quote_reserves.checked_add(quote).ok_or(PumpError::Overflow)?;
- let transfer=|signer_seeds:&[&[&[u8]];1]|crate::buy_v2::token_transfers::transfer_curve_tokens_ref(token_program,associated_bonding_curve,associated_user,&bonding_curve,ctx.accounts.mint.decimals,ctx.accounts.mint.as_ref(),amount,signer_seeds);transfer(&[&[b"bonding-curve",ctx.accounts.mint.key().as_ref(),&[ctx.bumps.bonding_curve]]])?;
- if ctx.accounts.user.key()==ctx.accounts.global.whitelist_pda{
-  ctx.accounts.associated_bonding_curve.reload()?;
-  ctx.accounts.associated_user.reload()?;
-  let quote_mint=bonding_curve.quote_mint;
-  bonding_curve.sync_virtual_quote_reserves(ctx.accounts.associated_bonding_curve.amount,ctx.accounts.associated_user.amount,&quote_mint)?;
- }
+ let transfer=|signer_seeds:&[&[&[u8]];1]|crate::payments::transfer_curve_tokens_ref(token_program,associated_bonding_curve,associated_user,&bonding_curve,ctx.accounts.mint.decimals,ctx.accounts.mint.as_ref(),amount,signer_seeds);transfer(&[&[b"bonding-curve",ctx.accounts.mint.key().as_ref(),&[ctx.bumps.bonding_curve]]])?;
  let mint=ctx.accounts.mint.key();
- let mut cashback=false;
  if creator_fee!=0{
   crate::legacy_sell::check_bonding_curve_v2(ctx.remaining_accounts,&mint)?;
    crate::legacy_buy::native_payments::ensure_rent_exempt(&ctx.accounts.system_program,&ctx.accounts.user,&ctx.accounts.creator_vault)?;
    crate::user_quote_payments::transfer_native_unchecked(ctx.accounts.system_program.as_ref(),&ctx.accounts.user,&ctx.accounts.creator_vault,creator_fee)?;
  }
  crate::user_quote_payments::transfer_native_curve(ctx.accounts.system_program.as_ref(),&ctx.accounts.user,&bonding_curve,quote)?;
- let (buyback_fee,remaining)=crate::buy_v2::recipient_payments::split_protocol_fee(&ctx.accounts.global,protocol_fee,bonding_curve.is_mayhem_mode);
+ let (buyback_fee,remaining)=crate::split_protocol_fee(&ctx.accounts.global,protocol_fee,bonding_curve.is_mayhem_mode);
  if buyback_fee!=0{crate::user_quote_payments::transfer_native_curve_unchecked(ctx.accounts.system_program.as_ref(),&ctx.accounts.user,&buyback_fee_recipient,buyback_fee)?;}
  crate::user_quote_payments::transfer_native_recipient(ctx.accounts.system_program.as_ref(),&ctx.accounts.user,&fee_recipient,remaining)?;
 
@@ -198,15 +190,15 @@ pub use crate::legacy_native_payments as native_payments;
  fee_basis_points:protocol_fee_bps,
  fee:protocol_fee,
  creator,
- creator_fee_basis_points:if cashback{0}else{creator_fee_bps},
- creator_fee:if cashback{0}else{creator_fee},
+ creator_fee_basis_points:creator_fee_bps,
+ creator_fee,
  track_volume:track_volume.0,
  holder_rewards_bps:if bonding_curve.is_holder_reward{creator_fee_bps}else{0},
  holder_rewards:if bonding_curve.is_holder_reward{creator_fee}else{0},
  ix_name:"buy_exact_sol_in".to_string(),
  mayhem_mode:bonding_curve.is_mayhem_mode,
- cashback_fee_basis_points:if cashback{creator_fee_bps}else{0},
- cashback:if cashback{creator_fee}else{0},
+ cashback_fee_basis_points:0,
+ cashback:0,
  buyback_fee_basis_points:if bonding_curve.is_mayhem_mode{0}else{ctx.accounts.global.buyback_basis_points},
  buyback_fee,
  shareholders:vec![],

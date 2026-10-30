@@ -37,12 +37,3 @@ pub fn execute(ctx:Context<Initialize>)->Result<()>{
  g.max_curve_depth=0;
  Ok(())
 }
-#[event_cpi]
-#[derive(Accounts)]
-pub struct UpdateGlobalAuthority<'info>{
- #[account(mut,seeds=[b"global"],bump,has_one=authority @ crate::PumpError::NotAuthorized)]
- pub global:Account<'info,crate::Global>,
- pub authority:Signer<'info>,
- /// CHECK: new authority is assigned by the current signer; zero/self are accepted by the original.
- pub new_authority:AccountInfo<'info>,
-}

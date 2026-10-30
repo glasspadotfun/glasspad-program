@@ -1,4 +1,6 @@
 use anchor_lang::prelude::*;
+/// the upstream fee-sharing program. glasspad never migrates a creator vault to it; the check stays so a vault owned by it can never be drained here.
+pub const FEES:Pubkey=anchor_lang::solana_program::pubkey!("pfeeUxB6jkeY1Hxd7CsFCAjcbHA9rWtchMGdZ6VojVZ");
 #[event_cpi]#[derive(Accounts)]pub struct CollectCreatorFee<'info>{#[doc="CHECK: payout destination is bound to the vault PDA."]#[account(mut)]pub creator:AccountInfo<'info>,#[doc="CHECK: original defers owner/data restrictions to System transfer."]#[account(mut,seeds=[b"creator-vault",creator.key().as_ref()],bump)]pub creator_vault:AccountInfo<'info>,pub system_program:Program<'info,System>,}
 #[event_cpi]
 #[derive(Accounts)]
@@ -100,7 +102,7 @@ pub struct CollectCreatorFeeV2<'info>{
 
 
 pub fn collect_creator_fee(ctx:Context<crate::CollectCreatorFee>)->Result<()>{
- let creator_vault=&ctx.accounts.creator_vault;match *ctx.accounts.creator.owner!=crate::distribution::FEES{false=>err!(crate::PumpError::UnableToDistributeCreatorVaultMigratedToSharingConfig),true=>{
+ let creator_vault=&ctx.accounts.creator_vault;match *ctx.accounts.creator.owner!=FEES{false=>err!(crate::PumpError::UnableToDistributeCreatorVaultMigratedToSharingConfig),true=>{
  if ctx.accounts.creator.executable{msg!("Creator account is executable, so it cannot receive lamports");return Ok(());}
  let rent=Rent::get()?;
  let amount=creator_vault.lamports().saturating_sub(rent.minimum_balance(0));
@@ -195,7 +197,7 @@ pub fn collect<'info>(
  creator_vault_bump:u8,creator_vault_token_account:&AccountInfo<'info>,decimals:u8,quote_mint:&AccountInfo<'info>,
  quote_token_program:&Interface<'info,anchor_spl::token_interface::TokenInterface>,system_program:&AccountInfo<'info>,
 )->Result<Option<(u64,Pubkey)>>{
- require!(*creator.owner!=crate::distribution::FEES,crate::PumpError::UnableToDistributeCreatorVaultMigratedToSharingConfig);
+ require!(*creator.owner!=FEES,crate::PumpError::UnableToDistributeCreatorVaultMigratedToSharingConfig);
  if creator.executable{msg!("Creator account is executable, so it cannot receive lamports");return Ok(None);}
  let creator_key=creator.key();
  if quote_mint.key()==anchor_spl::token::spl_token::native_mint::ID{
