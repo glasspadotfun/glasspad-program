@@ -23,8 +23,6 @@ pub use legacy_buy::*;
 pub use extend::*;
 pub mod migrate;
 pub use migrate::*;
-pub mod migrate_v2;
-pub use migrate_v2::*;
 #[path="multi_hop_curve_swap.rs"]pub mod multi_hop_curve;
 pub use multi_hop_curve::*;
 #[path="pump_quote.rs"]pub mod pump_quote;

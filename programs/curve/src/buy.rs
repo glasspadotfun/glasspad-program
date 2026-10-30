@@ -57,9 +57,7 @@ pub use crate::legacy_native_payments as native_payments;
  require_gt!(min_tokens_out,0,PumpError::BuyZeroAmount);
 // layout-pad
  require_gt!(spendable_sol_in,0,PumpError::BuyNotEnoughSolToCoverFees);
- let (protocol_fee_bps,creator_fee_bps)={let fees=crate::legacy_sell::fee_cpi::trade_fees(
-  &ctx.accounts.global,bonding_curve,&ctx.accounts.mint,&ctx.accounts.fee_config,&ctx.accounts.fee_program,ctx.accounts.program.as_ref(),spendable_sol_in
- )?;if ctx.accounts.user.key()==ctx.accounts.global.whitelist_pda{(0,0)}else{(fees.2,fees.3)}};
+ let (protocol_fee_bps,creator_fee_bps)={let fees=crate::fee_math::fees_for(bonding_curve,spendable_sol_in)?;(fees.2,fees.3)};
  let cb=if bonding_curve.creator==Pubkey::default(){0}else{creator_fee_bps};
  let total_fee_bps=protocol_fee_bps.checked_add(cb).ok_or(PumpError::Overflow)?;
  let raw_quote=if total_fee_bps==0{spendable_sol_in}else{(spendable_sol_in as u128*10000/(10000+total_fee_bps as u128)) as u64};
@@ -160,81 +158,12 @@ pub use crate::legacy_native_payments as native_payments;
   let quote_mint=bonding_curve.quote_mint;
   bonding_curve.sync_virtual_quote_reserves(ctx.accounts.associated_bonding_curve.amount,ctx.accounts.associated_user.amount,&quote_mint)?;
  }
- if ctx.accounts.user_volume_accumulator.user==Pubkey::default(){ctx.accounts.user_volume_accumulator.user=ctx.accounts.user.key();}
  let mint=ctx.accounts.mint.key();
  let mut cashback=false;
  if creator_fee!=0{
   crate::legacy_sell::check_bonding_curve_v2(ctx.remaining_accounts,&mint)?;
-  if bonding_curve.is_cashback_coin{
-   #[inline(always)] fn pay_owned<'info>(to:AccountInfo<'info>,system_program:&AccountInfo<'info>,user:&Signer<'info>,amount:u64)->Result<()>{crate::user_quote_payments::transfer_native_owned(system_program,user,to,amount)}
-   pay_owned(ctx.accounts.user_volume_accumulator.to_account_info(),ctx.accounts.system_program.as_ref(),&ctx.accounts.user,creator_fee)?;
-// layout-pad
-// layout-pad
-// layout-pad
-// layout-pad
-// layout-pad
-// layout-pad
-// layout-pad
-// layout-pad
-// layout-pad
-// layout-pad
-// layout-pad
-// layout-pad
-// layout-pad
-// layout-pad
-// layout-pad
-// layout-pad
-// layout-pad
-// layout-pad
-// layout-pad
-// layout-pad
-// layout-pad
-// layout-pad
-// layout-pad
-// layout-pad
-// layout-pad
-// layout-pad
-// layout-pad
-// layout-pad
-// layout-pad
-// layout-pad
-// layout-pad
-// layout-pad
-// layout-pad
-// layout-pad
-// layout-pad
-// layout-pad
-// layout-pad
-// layout-pad
-// layout-pad
-// layout-pad
-// layout-pad
-// layout-pad
-// layout-pad
-// layout-pad
-// layout-pad
-// layout-pad
-// layout-pad
-// layout-pad
-// layout-pad
-// layout-pad
-// layout-pad
-// layout-pad
-// layout-pad
-// layout-pad
-// layout-pad
-// layout-pad
-// layout-pad
-// layout-pad
-// layout-pad
-// layout-pad
-// layout-pad
-   ctx.accounts.user_volume_accumulator.cashback_earned=ctx.accounts.user_volume_accumulator.cashback_earned.checked_add(creator_fee).ok_or(error!(PumpError::Overflow))?;
-   cashback=true;
-  }else{
    crate::legacy_buy::native_payments::ensure_rent_exempt(&ctx.accounts.system_program,&ctx.accounts.user,&ctx.accounts.creator_vault)?;
    crate::user_quote_payments::transfer_native_unchecked(ctx.accounts.system_program.as_ref(),&ctx.accounts.user,&ctx.accounts.creator_vault,creator_fee)?;
-  }
  }
  crate::user_quote_payments::transfer_native_curve(ctx.accounts.system_program.as_ref(),&ctx.accounts.user,&bonding_curve,quote)?;
  let (buyback_fee,remaining)=crate::buy_v2::recipient_payments::split_protocol_fee(&ctx.accounts.global,protocol_fee,bonding_curve.is_mayhem_mode);
@@ -251,10 +180,10 @@ pub use crate::legacy_native_payments as native_payments;
  let creator=bonding_curve.creator;
  let timestamp=Clock::get()?.unix_timestamp;
  let event=crate::trade_types::TradeEvent{
- total_unclaimed_tokens:ctx.accounts.user_volume_accumulator.total_unclaimed_tokens,
- total_claimed_tokens:ctx.accounts.user_volume_accumulator.total_claimed_tokens,
- current_sol_volume:ctx.accounts.user_volume_accumulator.current_sol_volume,
- last_update_timestamp:ctx.accounts.user_volume_accumulator.last_update_timestamp,
+ total_unclaimed_tokens:0,
+ total_claimed_tokens:0,
+ current_sol_volume:0,
+ last_update_timestamp:0,
  user:ctx.accounts.user.key(),
  mint,
  sol_amount:quote,
