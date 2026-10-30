@@ -910,7 +910,7 @@ pub enum PumpError {
     MayhemModeDisabled,
     #[msg("creator has been migrated to sharing config")]
     CreatorMigratedToSharingConfig,
-    #[msg("creator_vault has been migrated to sharing config, use pump:distribute_creator_fees instead")]
+    #[msg("creator vault was moved to a sharing config")]
     UnableToDistributeCreatorVaultMigratedToSharingConfig,
     #[msg("Sharing config is not active")]
     SharingConfigNotActive,
@@ -1011,7 +1011,7 @@ pub enum PumpError {
     QuoteBondingCurveNotEligible,
     #[msg("A quote-chain bonding curve has migrated: its pool and vault remaining accounts are required")]
     QuotePoolAccountsRequired,
-    #[msg("Quote pool remaining account is not an initialized pump-amm pool")]
+    #[msg("quote pool remaining account is not an initialized amm pool")]
     QuotePoolNotFound,
     #[msg("Quote pool or vault remaining accounts do not match derivation or are invalid")]
     InvalidQuotePool,
