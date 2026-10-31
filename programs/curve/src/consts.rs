@@ -24,7 +24,7 @@ pub const POOL_MIGRATION_FEE: u64 = 200_000_000;
 
 /// the team's half of the protocol fee lands here. published on the docs page.
 #[cfg(not(feature = "devnet"))]
-pub const TEAM: Pubkey = anchor_lang::solana_program::pubkey!("6r8QzyMGZ12rsDFYDakrM7j5i52VNY28KKZTTQRWikGs");
+pub const TEAM: Pubkey = anchor_lang::solana_program::pubkey!("5NmHtk2ajKQWGHFtb56BRgjGc248Z77ETUxmst4VERph");
 /// devnet test build: the deployer wallet plays the team, so the canary can seal and crank.
 #[cfg(feature = "devnet")]
 pub const TEAM: Pubkey = anchor_lang::solana_program::pubkey!("6TrrMJAHMriYKHAak9xwL2TqCLWLW7kJwM2A7ackmqfy");
